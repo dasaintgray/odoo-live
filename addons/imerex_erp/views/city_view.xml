@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+	<!-- Add location to the Partner form -->
+	<record model="ir.ui.view" id="view_partner_form_city">
+		<field name="name">res.partner.form.city</field>
+		<field name="model">res.partner</field>
+		<field name="inherit_id" ref="base.view_partner_form"/>
+		<field name="arch" type="xml">
+			<data>
+				<field name="city" position="replace">
+					<field name="brgy" placeholder="Barangay or Area" class="o_address_street" attrs="{'invisible': [('type','!=', 'consignee')]}"/>
+					<field name="city" placeholder="Enter City" class="o_address_city"/>
+					<field name="shipper_id" attrs="{'invisible': False}"/>
+					<field name="hashrow" attrs="{'invisible': True}"/>
+				</field>
+				<field name="child_ids" position="attributes">
+					<attribute name="context">{'default_parent_id': active_id, 'default_street': street, 'default_street2': street2, 'default_barangay': brgy, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang}</attribute>
+				</field>
+				<xpath expr="//field[@name='child_ids']/form/sheet/group/group[1]" position="replace">
+					<group colspan="5">
+						<field name="name" string="Contact Name" attrs="{'required' : [('type', '=', 'contact')]}"/>
+						<field name="title" placeholder="e.g. Mr."
+							attrs="{'invisible': [('type','!=', 'contact')]}"/>
+						<field name="function" placeholder="e.g. Sales Director"
+							attrs="{'invisible': [('type','!=', 'contact')]}"/>
+						<label for="street" string="Address" attrs="{'invisible': [('type','=', 'contact')]}"/>
+						<div attrs="{'invisible': [('type','=', 'contact')]}">
+							<div class="o_address_format" name="div_address">
+								<field name="street" placeholder="Street..." class="o_address_street"/>
+								<field name="street2" placeholder="Street 2..." class="o_address_street"/>
+								<field name="brgy" placeholder="Barangay or Area" class="o_address_street"/>
+								<field name="city_id" placeholder="City Address"/>
+							</div>
+						</div>
+						<field name="comment" placeholder="Internal notes..."/>
+					</group>
+        		</xpath>
+			</data>
+		</field>
+	</record>
+
+	<record id="view_move_form_hash" model="ir.ui.view">
+		<field name="name">account.move.form.hash</field>
+		<field name="model">account.move</field>
+		<field name="inherit_id" ref="account.view_move_form"/>
+		<field name="arch" type="xml">
+			<data>
+				<xpath expr="//field[@name='show_name_warning']" position="after">
+					<field name="hashrow" attrs="{'invisible': True}"/>
+					<field name="hashrow_pay" attrs="{'invisible': True}"/>
+				</xpath>		
+			</data>
+		</field>
+	</record>
+
+	<record id="view_partner_tree_name" model="ir.ui.view">
+		<field name="name">res.partner.tree.naming</field>
+		<field name="model">res.partner</field>
+		<field name="inherit_id" ref="base.view_partner_tree"/>
+		<field name="arch" type="xml">
+		<data>
+			<xpath expr="/tree/field[@name='display_name']" position="replace">
+					<field name="name"/>
+					<field name="type" string="Type"/>
+			</xpath>
+		</data>
+		</field>
+	</record>
+
+	<record id="view_partner_kanban_name" model="ir.ui.view">
+		<field name="name">res.partner.kanban.naming</field>
+		<field name="model">res.partner</field>
+		<field name="inherit_id" ref="base.res_partner_kanban_view"/>
+		<field name="arch" type="xml">
+		<data>
+			<xpath expr="/kanban/templates" position="replace">
+				<templates>
+					<t t-name="kanban-box">
+						<div class="oe_kanban_global_click o_kanban_record_has_image_fill o_res_partner_kanban">
+							<t t-if="!record.is_company.raw_value">
+								<t t-if="record.type.raw_value === 'delivery'" t-set="placeholder" t-value="'/base/static/img/truck.png'"/>
+								<t t-elif="record.type.raw_value === 'invoice'" t-set="placeholder" t-value="'/base/static/img/money.png'"/>
+								<t t-else="" t-set="placeholder" t-value="'/base/static/img/avatar_grey.png'"/>
+								<div class="o_kanban_image_fill_left d-none d-md-block" t-attf-style="background-image:url('#{kanban_image('res.partner', 'image_128', record.id.raw_value,  placeholder)}')">
+									<img class="o_kanban_image_inner_pic" t-if="record.parent_id.raw_value" t-att-alt="record.parent_id.value" t-att-src="kanban_image('res.partner', 'image_128', record.parent_id.raw_value)"/>
+								</div>
+								<div class="o_kanban_image d-md-none" t-attf-style="background-image:url('#{kanban_image('res.partner', 'image_128', record.id.raw_value,  placeholder)}')">
+									<img class="o_kanban_image_inner_pic" t-if="record.parent_id.raw_value" t-att-alt="record.parent_id.value" t-att-src="kanban_image('res.partner', 'image_128', record.parent_id.raw_value)"/>
+								</div>
+							</t>
+							<t t-else="">
+								<t t-set="placeholder" t-value="'/base/static/img/company_image.png'"/>
+								<div class="o_kanban_image_fill_left o_kanban_image_full" t-attf-style="background-image: url(#{kanban_image('res.partner', 'image_128', record.id.raw_value, placeholder)})" role="img"/>
+							</t>
+							<div class="oe_kanban_details d-flex flex-column">
+								<strong class="o_kanban_record_title oe_partner_heading"><field name="name"/></strong>
+								<div class="o_kanban_tags_section oe_kanban_partner_categories"/>
+								<ul>
+									<li t-if="record.function.raw_value"><field name="function"/></li>
+									<li t-if="record.parent_id.raw_value and !record.is_company.raw_value">is related to <field name="parent_id"/> and is a <field name="type"/></li>
+									<li t-if="!record.parent_id.raw_value">is a <field name="type"/></li>
+									<li t-if="record.city.raw_value or record.country_id.raw_value">
+										<t t-if="record.city.raw_value"><field name="city"/><t t-if="record.country_id.raw_value"></t></t>
+										<t t-if="record.country_id.raw_value"><field name="country_id"/></t>
+									</li>
+									<li t-if="record.email.raw_value" class="o_text_overflow"><field name="email"/></li>
+								</ul>
+								<div class="o_row">
+									<span class="oe_kanban_partner_links"/>
+								</div>
+							</div>
+						</div>
+					</t>
+				</templates>
+			</xpath>
+		</data>
+		</field>
+	</record>	
+
+	<record id="view_order_form_hash" model="ir.ui.view">
+		<field name="name">sale.order.form.hash</field>
+		<field name="model">sale.order</field>
+		<field name="inherit_id" ref="sale.view_order_form"/>
+		<field name="arch" type="xml">
+			<data>
+				<field name="client_order_ref" position="after">
+					<field name="hashrow" attrs="{'invisible': True}"/>
+					<field name="shipper_id" attrs="{'invisible': False}"/>
+				</field>			
+			</data>
+		</field>
+	</record>
+
+	<record id="product_template_form_view_hash" model="ir.ui.view">
+		<field name="name">product.template.form.hash</field>
+		<field name="model">product.template</field>
+		<field name="inherit_id" ref="product.product_template_form_view"/>
+		<field name="arch" type="xml">
+			<data>
+				<field name="description" position="after">
+					<field name="hashrow" attrs="{'invisible': True}"/>
+				</field>			
+			</data>
+		</field>
+	</record>
+
+	<record id="product_product_view_form_easy_inherit_stock_imerex" model="ir.ui.view">
+		<field name="name">product.product.view.form.easy.inherit.stock.imerex</field>
+		<field name="model">product.product</field>
+		<field name="inherit_id" ref="stock.product_product_view_form_easy_inherit_stock"/>
+		<field name="arch" type="xml">
+			<xpath expr="//button[@name='action_update_quantity_on_hand']" position="attributes">
+				<attribute name="invisible">True</attribute>
+			</xpath>
+		</field>
+	</record>
+
+	<record model="ir.ui.view" id="product_form_view_procurement_button_imerex">
+		<field name="name">product.product.procurement.imerex</field>
+		<field name="model">product.product</field>
+		<field name="inherit_id" ref="stock.product_form_view_procurement_button"/>
+		<field name="arch" type="xml">
+			<xpath expr="//button[@name='action_update_quantity_on_hand']" position="attributes">
+				<attribute name="invisible">True</attribute>
+			</xpath>
+		</field>
+	</record>
+
+	<record model="ir.ui.view" id="product_template_form_view_procurement_button_imerex">
+		<field name="name">product.template_procurement_imerex</field>
+		<field name="model">product.template</field>
+		<field name="inherit_id" ref="stock.product_template_form_view_procurement_button"/>
+		<field name="arch" type="xml">
+			<xpath expr="//button[@name='action_update_quantity_on_hand']" position="attributes">
+				<attribute name="invisible">True</attribute>
+			</xpath>
+		</field>
+	</record>
+
+		<!-- Add location to Company form -->
+	<record model="ir.ui.view" id="view_company_form_city">
+		<field name="name">res.company.form.city</field>
+		<field name="model">res.company</field>
+		<field name="inherit_id" ref="base.view_company_form"/>
+		<field name="arch" type="xml">
+			<data>
+				<field name="state_id" position="attributes">
+					<attribute name="invisible">True</attribute>
+				</field>
+				<field name="country_id" position="attributes">
+					<attribute name="invisible">True</attribute>
+				</field>
+				<field name="zip" position="attributes">
+					<attribute name="invisible">True</attribute>
+				</field>
+				<field name="city" position="replace">
+					<field name="brgy" placeholder="Barangay or Area" class="o_address_street"/>
+					<field name="city_id" placeholder="City Address"/>
+					<field name="hashrow" attrs="{'invisible': True}"/>
+					<field name="cargo_branch_id" attrs="{'invisible': True}"/>
+				</field>
+			</data>
+		</field>
+	</record>
+
+	<!-- Add cities to the State form -->
+	<record model="ir.ui.view" id="view_country_state_form2">
+		<field name="name">view_country_state_form2</field>
+		<field name="model">res.country.state</field>
+		<field name="inherit_id" ref="base.view_country_state_form"/>
+		<field name="arch" type="xml">
+			<xpath expr="//group[1]" position="after">
+				<separator string="City Information"/>
+				<field name="city_ids" colspan="4" nolabel="1" widget="one2many_list"/>
+			</xpath>
+		</field>
+	</record>
+
+	<!-- City -->
+	<record model="ir.ui.view" id="view_city_tree">
+		<field name="name">imerex_erp.city.tree</field>
+		<field name="model">imerex_erp.city</field>
+		<field name="arch" type="xml">
+			<tree string="City">
+				<field name="name"/>
+				<field name="zip"/>
+				<field name="state_id" domain="[('country_id','=',country_id)]"/>
+				<field name="country_id"/>
+			</tree>
+		</field>
+	</record>
+
+	<record model="ir.ui.view" id="view_city_form">
+		<field name="name">imerex_erp.city.form</field>
+		<field name="model">imerex_erp.city</field>
+		<field name="arch" type="xml">
+			<form string="City">
+				<group colspan="4" col="4">
+					<field name="name"/>
+					<field name="zip" /> <!--required="1"-->
+					<field name="country_id" />
+					<field name="state_id" domain="[('country_id','=',country_id)]"/>
+					<field name="code"/>
+				</group>
+			</form>
+		</field>
+	</record>
+
+	<record model="ir.actions.act_window" id="action_city">
+		<field name="name">City</field>
+		<field name="type">ir.actions.act_window</field>
+		<field name="res_model">imerex_erp.city</field>
+		<field name="view_mode">tree,form</field>
+	</record>
+
+       <record id="view_res_partner_filter_cargo" model="ir.ui.view">
+            <field name="name">res.partner.select.cargo</field>
+            <field name="model">res.partner</field>
+			<field name="inherit_id" ref="base.view_res_partner_filter"/>
+            <field name="arch" type="xml">
+				<xpath expr="//field[@name='user_id']" position="after">
+				<separator/>
+                    <filter string="Shipper" name="is_shipper" domain="[('type', '=', 'shipper')]"/>
+                    <filter string="Consignee" name="is_consignee" domain="[('type', '=', 'consignee')]"/>
+				</xpath>
+            </field>
+        </record>
+
+	<menuitem name="Cities" groups="base.group_system" action="action_city" parent="contacts.menu_localisation" id="menu_city_partner"/>
+</odoo>

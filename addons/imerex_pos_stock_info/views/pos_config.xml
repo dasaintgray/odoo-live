@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id='imerex_pos_stock_info_config' model='ir.ui.view'>
+        <field name='name'>sh.pos.stock.imformation.confirm</field>
+        <field name='model'>pos.config</field>
+        <field name='inherit_id' ref='point_of_sale.pos_config_view_form' />
+        <field type='xml' name='arch'>
+            <xpath expr="//div[4]" position="after">
+                <h2>Stock Information</h2>
+                <div class="row mt16 o_settings_container">
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane">
+                            <field name='sh_enable_on_hand_qty' />
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <label for='sh_enable_on_hand_qty' />
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_right_pane" attrs="{'invisible': [('sh_enable_on_hand_qty', '!=', True)]}">
+                            <div class="o_form_label">
+                                <label for="sh_manage_stock" />
+                            </div>
+                            <field name='sh_manage_stock' widget='radio' />
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

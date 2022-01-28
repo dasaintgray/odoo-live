@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="combo_product_assets" name="imerex_pos_combo_product assets" inherit_id="point_of_sale.assets">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/imerex_pos_combo_product/static/src/js/models.js"></script>
+            <script type="text/javascript" src="/imerex_pos_combo_product/static/src/js/popups.js"></script>
+            <script type="text/javascript" src="/imerex_pos_combo_product/static/src/js/Screens/ProductScreen/product_screen.js"></script>
+            <link rel="stylesheet" href="/imerex_pos_combo_product/static/src/css/product_combo.css"/>
+        </xpath>
+    </template>
+
+</odoo>

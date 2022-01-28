@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id='template' xml:space="preserve">
+    <t t-extend="ProductItem" t-inherit="point_of_sale.ProductItem" t-inherit-mode="extension">
+        <xpath expr='//div[hasclass("product-name")]' position='after'>
+            <t t-if='env.pos.config.sh_enable_on_hand_qty'>
+                <t t-if='env.pos.config.sh_manage_stock == "on_hand_qty"'>
+                    <t t-if='props.product.type == "product" and props.product.is_combo == 0'>
+                        <t t-if='env.pos.db.on_hand_qty[props.product.id][0] > 0'>
+                            <span class='sh_display_positive_qty' data-toggle="tooltip" title="On Hand Qty">
+                                <div t-att-id='props.product.id' class='on_hand_qty'>
+                                    <t t-esc='env.pos.db.on_hand_qty[props.product.id][0]' />
+                                </div>
+                            </span>
+                        </t>
+                        <t t-else=''>
+                            <span class='sh_display_nagative_qty' data-toggle="tooltip" title="On Hand Qty">
+                                <div t-att-id='props.product.id' class='on_hand_qty'>
+                                    <t t-esc='env.pos.db.on_hand_qty[props.product.id][0]' />
+                                </div>
+                            </span>
+                        </t>
+                    </t>
+                </t>
+                <t t-if='env.pos.config.sh_manage_stock == "available_qty"'>
+                    <t t-if='props.product.type == "product" and props.product.is_combo == 0'>
+                        <t t-if='env.pos.db.on_hand_qty[props.product.id][1] > 0'>
+                            <span class='sh_display_positive_qty' data-toggle="tooltip" title="Virtual Qty">
+                                <div t-att-name='props.product.id'>
+                                    <t t-esc='env.pos.db.on_hand_qty[props.product.id][1]' />
+                                </div>
+                            </span>
+                        </t>
+                        <t t-else=''>
+                            <span class='sh_display_nagative_qty' data-toggle="tooltip" title="Virtual Qty">
+                                <div t-att-name='props.product.id'>
+                                    <t t-esc='env.pos.db.on_hand_qty[props.product.id][1]' />
+                                </div>
+                            </span>
+                        </t>
+                    </t>
+                </t>
+                <t t-if='env.pos.config.sh_manage_stock == "both"'>
+                    <t t-if='props.product.type == "product" and props.product.is_combo == 0'>
+                        <t t-if='env.pos.db.on_hand_qty[props.product.id][0] > 0'>
+                            <span class='sh_display_positive_qty' data-toggle="tooltip" title="On Hand Qty">
+                                <div t-att-id='props.product.id' class='on_hand_qty'>
+                                    <t t-esc='env.pos.db.on_hand_qty[props.product.id][0]' />
+                                </div>
+                            </span>
+                        </t>
+                        <t t-else=''>
+                            <span class='sh_display_nagative_qty' data-toggle="tooltip" title="On Hand Qty">
+                                <div t-att-id='props.product.id' class='on_hand_qty'>
+                                    <t t-esc='env.pos.db.on_hand_qty[props.product.id][0]' />
+                                </div>
+                            </span>
+                        </t>
+    
+                        <t t-if='env.pos.db.on_hand_qty[props.product.id][1] > 0'>
+                            <span class='sh_display_positive_qty' style='top: 20px !important' data-toggle="tooltip" title="Virtual Qty">
+                                <div t-att-name='props.product.id'>
+                                    <t t-esc='env.pos.db.on_hand_qty[props.product.id][1]' />
+                                </div>
+                            </span>
+                        </t>
+                        <t t-else=''>
+                            <span class='sh_display_nagative_qty' style='top: 20px !important' data-toggle="tooltip" title="Virtual Qty">
+                                <div t-att-name='props.product.id'>
+                                    <t t-esc='env.pos.db.on_hand_qty[props.product.id][1]' />
+                                </div>
+                            </span>
+                        </t>
+                    </t>
+                </t>
+            </t>
+        </xpath>
+    </t>
+</templates>

@@ -1,0 +1,132 @@
+<section class="oe_container oe_dark">
+    <div class="oe_row oe_spaced" style="max-width: 100%;">
+        <h2 class="oe_slogan">Pos Cache</h2>
+        <h3 class="oe_slogan">Enable a cache on pos models for a lower POS loading time.</h3>
+    </div>
+</section>
+
+<section class="oe_container oe_dark">
+    <div class="oe_row" style="max-width: 100%;">
+        <div class="oe_span12" style="max-width: 100%;">
+            <div class="alert alert-info">
+                <i class="fa fa-arrow-circle-o-right"></i>
+                <b>Features.<b></b>
+            </div>
+        </div>
+        <div class="oe_span12" style="max-width: 100%;">
+            <ul class="list-unstyled">
+                <li><i class="fa fa-check text-primary" style="margin-right:5px;"></i>Allow to configure witch models will be cached.</li>
+                <li><i class="fa fa-check text-primary" style="margin-right:5px;"></i>Creates a cache per POS config.</li>
+                <li><i class="fa fa-check text-primary" style="margin-right:5px;"></i>Drastically lowers the time it takes to load a POS session with a lot of model items.</li>
+                <li><i class="fa fa-check text-primary" style="margin-right:5px;"></i>Cache gets automatically updated when users edit or create new records belongs to configured catched models.</li>
+                <li><i class="fa fa-check text-primary" style="margin-right:5px;"></i>A daily cron rebuild all cache to ensure start new day with fresh catched data.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row" style="max-width: 100%;">
+        <div class="oe_span12" style="max-width: 100%;">
+            <div class="alert alert-info">
+                <i class="fa fa-arrow-circle-o-right"></i>
+                <b>Allow to configure witch models will be catched.<b></b>
+            </div>
+        </div>
+        <div class="oe_span12" style="max-width: 100%;">
+            <p>To start to use this module, you have to configure the models that
+                will be cached, for this there is a field called
+                "Cache models" in the pos config, only you have to add some models and
+                those will be cached at pos session start.
+            </p>
+            <div class="oe_demo oe_picture oe_screenshot" style="max-height: 100%;">
+                <img src="screenshot/model_config.png">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row" style="max-width: 100%;">
+        <div class="oe_span12" style="max-width: 100%;">
+            <div class="alert alert-info">
+                <i class="fa fa-arrow-circle-o-right"></i>
+                <b>Drastically lowers the time it takes to load a POS session with a lot of model items.<b></b>
+            </div>
+        </div>
+        <div class="oe_span12" style="max-width: 100%;">
+            <p>Tests with 150000 customers and 7000 products.
+               The load without the module takes approximately 3 minutes.
+               With the installed module it is reduced to 14 seconds.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row" style="max-width: 100%;">
+        <div class="oe_span12" style="max-width: 100%;">
+            <div class="alert alert-info">
+                <i class="fa fa-arrow-circle-o-right"></i>
+                <b>Cache gets automatically updated when users edit or create new records belongs to configured catched models.<b></b>
+            </div>
+        </div>
+        <div class="oe_span12" style="max-width: 100%;">
+            <p>
+                For these updates to reach the POS, the screen must be refreshed, which is now fast or at the next session opening.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="oe_container">
+    <div class="oe_row" style="max-width: 100%;">
+        <div class="oe_span12" style="max-width: 100%;">
+            <div class="alert alert-info">
+                <i class="fa fa-arrow-circle-o-right"></i>
+                <b>A daily cron rebuild all cache to ensure start new day with fresh catched data.<b></b>
+            </div>
+        </div>
+        <div class="oe_span12" style="max-width: 100%;">
+            <p>
+                It is responsible for records that have been created directly by BBDD or others not coupled.
+            </p>
+            <div class="oe_demo oe_picture oe_screenshot" style="max-height: 100%;">
+                <img src="screenshot/cron.png">
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- footer section starts-->
+<section class="oe_container">
+    <div class="oe_row" style="max-width:100%;">
+        <hr style="border-top: 1px solid #00aae7; margin-bottom: 5px;">
+        <div class="oe_span6">
+            <br/>
+            <p style="font-size:16px; text-align: justify;"><b>We are</b> a team of passionate people whose goal is to improve everyone's 
+                life through disruptive products. We build great products to solve your business problems.
+                Our products are designed for small to medium size companies willing to optimize their performance.
+            </p>
+            <div class="oe_span12" style="max-width: 100%;">
+                <h2 class="text-center">Help and Support</h2>
+                <p class="text-center">Please feel free to contact us if you need technical or functional support, also you can find more of our excellent apps in the Odoo store.</p>
+            </div>
+            <br/>
+            <div class="oe_slogan oe_spaced">
+                <span><a data-toggle="tooltip" data-placement="bottom" title="Get Instant Support!" rel="nofollow" href="mailto:soportemx@odoomail.wedoo.tech"><i class="fa fa-ticket"></i> Support</a></span>
+                <span><a data-toggle="tooltip" data-placement="bottom" target="_blank" href="https://apps.odoo.com/apps/modules/browse?search=wedoo"><i class="fa fa-shopping-cart"></i> Visit our store</a></span>
+            </div>
+        </div>
+        <div class="oe_span6">
+            <div class="oe_demo oe_picture oe_screenshot">
+                <a href="https://www.wedoo.tech"  target="_blank"r>
+                    <img src="wedoo.png" width="80px" height="auto">
+                </a>
+                <div class="oe_demo_footer oe_centeralign">Meet Us</div>
+            </div>
+        </div>
+    </div>
+</section>
+<!--footer section end-->

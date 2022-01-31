@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<!-- Add location to the Partner form -->
+	<record model="ir.ui.view" id="view_partner_form_city">
+		<field name="name">res.partner.form.city</field>
+		<field name="model">res.partner</field>
+		<field name="inherit_id" ref="base.view_partner_form"/>
+		<field name="arch" type="xml">
+			<data>
+				<field name="city" position="replace">
+					<field name="brgy" placeholder="Barangay or Area" class="o_address_street" attrs="{'invisible': [('type','!=', 'consignee')]}"/>
+					<field name="city" placeholder="Enter City" class="o_address_city"/>
+					<field name="shipper_id" attrs="{'invisible': False}"/>
+					<field name="hashrow" attrs="{'invisible': True}"/>
+				</field>
+				<field name="child_ids" position="attributes">
+					<attribute name="context">{'default_parent_id': active_id, 'default_street': street, 'default_street2': street2, 'default_barangay': brgy, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang}</attribute>
+				</field>
+				<xpath expr="//field[@name='child_ids']/form/sheet/group/group[1]" position="replace">
+					<group colspan="5">
+						<field name="name" string="Contact Name" attrs="{'required' : [('type', '=', 'contact')]}"/>
+						<field name="title" placeholder="e.g. Mr."
+							attrs="{'invisible': [('type','!=', 'contact')]}"/>
+						<field name="function" placeholder="e.g. Sales Director"
+							attrs="{'invisible': [('type','!=', 'contact')]}"/>
+						<label for="street" string="Address" attrs="{'invisible': [('type','=', 'contact')]}"/>
+						<div attrs="{'invisible': [('type','=', 'contact')]}">
+							<div class="o_address_format" name="div_address">
+								<field name="street" placeholder="Street..." class="o_address_street"/>
+								<field name="street2" placeholder="Street 2..." class="o_address_street"/>
+								<field name="brgy" placeholder="Barangay or Area" class="o_address_street"/>
+								<field name="city_id" placeholder="City Address"/>
+							</div>
+						</div>
+						<field name="comment" placeholder="Internal notes..."/>
+					</group>
+        		</xpath>
+			</data>
+		</field>
+	</record>
+
+    <!-- Add location to the Partner Tree -->
+    <record id="view_partner_tree_name" model="ir.ui.view">
+		<field name="name">res.partner.tree.naming</field>
+		<field name="model">res.partner</field>
+		<field name="inherit_id" ref="base.view_partner_tree"/>
+		<field name="arch" type="xml">
+		<data>
+			<xpath expr="/tree/field[@name='display_name']" position="replace">
+					<field name="name"/>
+					<field name="type" string="Type"/>
+			</xpath>
+		</data>
+		</field>
+	</record>
+
+    <!-- Add location to the Partner Kanban -->
+	<record id="view_partner_kanban_name" model="ir.ui.view">
+		<field name="name">res.partner.kanban.naming</field>
+		<field name="model">res.partner</field>
+		<field name="inherit_id" ref="base.res_partner_kanban_view"/>
+		<field name="arch" type="xml">
+		<data>
+			<xpath expr="/kanban/templates" position="replace">
+				<templates>
+					<t t-name="kanban-box">
+						<div class="oe_kanban_global_click o_kanban_record_has_image_fill o_res_partner_kanban">
+							<t t-if="!record.is_company.raw_value">
+								<t t-if="record.type.raw_value === 'delivery'" t-set="placeholder" t-value="'/base/static/img/truck.png'"/>
+								<t t-elif="record.type.raw_value === 'invoice'" t-set="placeholder" t-value="'/base/static/img/money.png'"/>
+								<t t-else="" t-set="placeholder" t-value="'/base/static/img/avatar_grey.png'"/>
+								<div class="o_kanban_image_fill_left d-none d-md-block" t-attf-style="background-image:url('#{kanban_image('res.partner', 'image_128', record.id.raw_value,  placeholder)}')">
+									<img class="o_kanban_image_inner_pic" t-if="record.parent_id.raw_value" t-att-alt="record.parent_id.value" t-att-src="kanban_image('res.partner', 'image_128', record.parent_id.raw_value)"/>
+								</div>
+								<div class="o_kanban_image d-md-none" t-attf-style="background-image:url('#{kanban_image('res.partner', 'image_128', record.id.raw_value,  placeholder)}')">
+									<img class="o_kanban_image_inner_pic" t-if="record.parent_id.raw_value" t-att-alt="record.parent_id.value" t-att-src="kanban_image('res.partner', 'image_128', record.parent_id.raw_value)"/>
+								</div>
+							</t>
+							<t t-else="">
+								<t t-set="placeholder" t-value="'/base/static/img/company_image.png'"/>
+								<div class="o_kanban_image_fill_left o_kanban_image_full" t-attf-style="background-image: url(#{kanban_image('res.partner', 'image_128', record.id.raw_value, placeholder)})" role="img"/>
+							</t>
+							<div class="oe_kanban_details d-flex flex-column">
+								<strong class="o_kanban_record_title oe_partner_heading"><field name="name"/></strong>
+								<div class="o_kanban_tags_section oe_kanban_partner_categories"/>
+								<ul>
+									<li t-if="record.function.raw_value"><field name="function"/></li>
+									<li t-if="record.parent_id.raw_value and !record.is_company.raw_value">is related to <field name="parent_id"/> and is a <field name="type"/></li>
+									<li t-if="!record.parent_id.raw_value">is a <field name="type"/></li>
+									<li t-if="record.city.raw_value or record.country_id.raw_value">
+										<t t-if="record.city.raw_value"><field name="city"/><t t-if="record.country_id.raw_value"></t></t>
+										<t t-if="record.country_id.raw_value"><field name="country_id"/></t>
+									</li>
+									<li t-if="record.email.raw_value" class="o_text_overflow"><field name="email"/></li>
+								</ul>
+								<div class="o_row">
+									<span class="oe_kanban_partner_links"/>
+								</div>
+							</div>
+						</div>
+					</t>
+				</templates>
+			</xpath>
+		</data>
+		</field>
+	</record>
+    <!-- Create Shipper and Consignee Default Category -->
+    <record id="view_res_partner_filter_cargo" model="ir.ui.view">
+        <field name="name">res.partner.select.cargo</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_res_partner_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="after">
+            <separator/>
+                <filter string="Shipper" name="is_shipper" domain="[('type', '=', 'shipper')]"/>
+                <filter string="Consignee" name="is_consignee" domain="[('type', '=', 'consignee')]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

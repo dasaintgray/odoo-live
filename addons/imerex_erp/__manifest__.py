@@ -10,7 +10,14 @@
     "website": "https://mrm.imerex.com.ph",
     "maintainer": "Circuit Minds I.T. Business Solutions",
     "depends": ["contacts","sale","account","product"],
-    "data": ["views/city_view.xml", "security/ir.model.access.csv"],
+    "data": [
+        "views/city.xml",
+        "views/product_product.xml",
+        "views/product_template.xml",
+        "views/res_partner.xml",
+        "views/sale_order.xml",
+        "security/ir.model.access.csv"
+        ],
     "installable": True,
     "auto_install": False,
 }

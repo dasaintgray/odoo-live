@@ -1,1 +1,0 @@
-Imerex POS customization

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Add hash to Product Template form -->   
+	<record id="product_template_form_view_hash" model="ir.ui.view">
+		<field name="name">product.template.form.hash</field>
+		<field name="model">product.template</field>
+		<field name="inherit_id" ref="product.product_template_form_view"/>
+		<field name="arch" type="xml">
+			<data>
+				<field name="description" position="after">
+					<field name="hashrow" attrs="{'invisible': True}"/>
+				</field>			
+			</data>
+		</field>
+	</record>
+    <!-- Remove update_quantity button from header of stock product template form -->
+	<record model="ir.ui.view" id="product_template_form_view_procurement_button_imerex">
+		<field name="name">product.template_procurement_imerex</field>
+		<field name="model">product.template</field>
+		<field name="inherit_id" ref="stock.product_template_form_view_procurement_button"/>
+		<field name="arch" type="xml">
+			<xpath expr="//button[@name='action_update_quantity_on_hand']" position="attributes">
+				<attribute name="invisible">True</attribute>
+			</xpath>
+		</field>
+	</record>
+</odoo>

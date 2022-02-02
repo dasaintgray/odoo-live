@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="imerex_pos_stock_info_assets" inherit_id="point_of_sale.assets">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/imerex_pos_stock_info/static/src/js/pos.js" />
+            <link rel="stylesheet" href="/imerex_pos_stock_info/static/src/scss/pos.scss" />
+        </xpath>
+    </template>
+</odoo>

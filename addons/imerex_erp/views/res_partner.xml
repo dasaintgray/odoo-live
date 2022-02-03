@@ -7,14 +7,34 @@
 		<field name="inherit_id" ref="base.view_partner_form"/>
 		<field name="arch" type="xml">
 			<data>
+				<xpath expr="//field[@name='name']" position="attributes">
+					<attribute name="readonly">1</attribute>
+					<attribute name="force_save">1</attribute>
+				</xpath>
+				<xpath expr="//field[@name='vat']" position="replace">
+     				<field name="vat" string="Tax ID or IQAMA"/>
+				</xpath>
+				<xpath expr="//field[@name='vat']" position="attributes">
+					<attribute name="required">1</attribute>
+				</xpath>
+				<xpath expr="//field[@name='mobile']" position="attributes">
+					<attribute name="required">1</attribute>
+				</xpath>
+				<field name="type" position="before">
+					<field name="type" placeholder="Address Type" attrs="{'required' : [('company_type','=','person')], 'invisible' : [('company_type','!=','person')]}"/>
+					<field name="co_name" placeholder="Company Name" attrs="{'required' : [('company_type','=','company')], 'invisible' : [('company_type','=','person')]}"/>
+					<field name="first_name" placeholder="First Name" attrs="{'required' : [('company_type','=','person')], 'invisible' : [('company_type','!=','person')]}"/>
+					<field name="last_name" placeholder="Last Name" attrs="{'required' : [('company_type','=','person')], 'invisible' : [('company_type','!=','person')]}"/>
+					<field name="name_ext" placeholder="Suffix or Name Ext" attrs="{'invisible' : [('company_type','!=','person')]}"/>
+				</field>
 				<field name="city" position="replace">
 					<field name="brgy" placeholder="Barangay or Area" class="o_address_street" attrs="{'invisible': [('type','!=', 'consignee')]}"/>
-					<field name="city" placeholder="Enter City" class="o_address_city"/>
-					<field name="shipper_id" attrs="{'invisible': False}"/>
+					<field name="city_id" placeholder="Enter City" class="o_address_city"/>
+					<field name="shipper_id" attrs="{'invisible': True}"/>
 					<field name="hashrow" attrs="{'invisible': True}"/>
 				</field>
 				<field name="child_ids" position="attributes">
-					<attribute name="context">{'default_parent_id': active_id, 'default_street': street, 'default_street2': street2, 'default_barangay': brgy, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang}</attribute>
+					<attribute name="context">{'default_parent_id': active_id, 'default_street': street, 'default_street2': street2, 'default_barangay': brgy, 'default_city': city_id, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang}</attribute>
 				</field>
 				<xpath expr="//field[@name='child_ids']/form/sheet/group/group[1]" position="replace">
 					<group colspan="5">

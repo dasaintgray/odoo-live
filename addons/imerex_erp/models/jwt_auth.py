@@ -32,7 +32,7 @@ class JWTAuth(models.Model):
             self.env.cr.execute("""
                 INSERT INTO imerex_erp_jwt_auth(access_token) VALUES ('%s');
             """%jwt_token['access_token'])
-            
+
     # backend_headers = api_headers
     # access_token = jwt_authentication()
     # backend_headers["Authorization"] = 'Bearer ' + access_token

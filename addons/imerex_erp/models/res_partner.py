@@ -33,29 +33,8 @@ class ResPartner(models.Model):
             if state.country_id:
                  self.country_id = state.country_id.id
 
-    # api_headers = {
-    #     "Content-Type": "application/json"
-    #     }
-    
-    # def jwt_authentication(self):
-    #     jwt_url_base = "https://jwt-clt.circuitmindz.com"
-    #     jwt_url = jwt_url_base + "/api/login"
-    #     jwt_body_auth = {
-    #         "Username":"admin",
-    #         "Password":"kQ5dcsBa98nKxfxYTK7miA=="
-    #         }
-    #     api_headers = {
-    #         "Content-Type": "application/json"
-    #         }
-    #     jwt_data = json.dumps(jwt_body_auth)
-    #     jwt_auth = requests.post(jwt_url, data=jwt_data, headers=api_headers)
-    #     access_token = jwt_auth.json()
-    #     return access_token
-    
-    # backend_headers = api_headers
-    # access_token = jwt_authentication()
-    # backend_headers["Authorization"] = 'Bearer ' + access_token
-    # backend_url_base = "https://backend-clt.circuitmindz.com"
-    # getshipperbyid_url = backend_url_base + "/shippers/5999"
-    # getshipperbyid = requests.get(getshipperbyid_url, headers=backend_headers)
-    # print(getshipperbyid.json())
+    # def write(self):
+    #     write = super(ResPartner, self).write()
+    #     if self.type == 'shipper':
+    #         return write
+

@@ -16,6 +16,7 @@
         "views/product_template.xml",
         "views/res_partner.xml",
         "views/sale_order.xml",
+        "views/jwt_schedule.xml",
         "security/ir.model.access.csv"
         ],
     "installable": True,

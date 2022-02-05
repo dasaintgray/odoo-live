@@ -1,15 +1,12 @@
 #Res Partner modification
 
-from odoo import api, fields, models, exceptions, _
-from odoo.tools.misc import unique
-from odoo.exceptions import UserError
+from odoo import fields, models
 import json
 import requests
-
 class JWTAuth(models.Model):
     _name='imerex_erp.jwt_auth'
     access_token = fields.Char(size=64)
-    
+
     def jwt_cron(self):
         jwt_url_base = "https://jwt-sb-clt.circuitmindz.com"
         jwt_url = jwt_url_base + "/api/login"
@@ -32,11 +29,17 @@ class JWTAuth(models.Model):
             self.env.cr.execute("""
                 INSERT INTO imerex_erp_jwt_auth(access_token) VALUES ('%s');
             """%jwt_token['access_token'])
-
-    # backend_headers = api_headers
-    # access_token = jwt_authentication()
-    # backend_headers["Authorization"] = 'Bearer ' + access_token
-    # backend_url_base = "https://backend-clt.circuitmindz.com"
-    # getshipperbyid_url = backend_url_base + "/shippers/5999"
-    # getshipperbyid = requests.get(getshipperbyid_url, headers=backend_headers)
-    # print(getshipperbyid.json())
+    
+    def api_headers(self):
+        domain = 'https://be-sb-clt.circuitmindz.com'
+        token = self.env['imerex_erp.jwt_auth'].search([]).access_token
+        api_cargo = {
+            'shipper_url' : domain + '/shippers/',
+            'shipper_refresh_url' : domain + '/shippers-refresh/',
+            'token' : token,
+            'headers' : {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            }
+        } 
+        return api_cargo

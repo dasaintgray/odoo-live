@@ -20,11 +20,11 @@ class JWTAuth(models.Model):
             "Content-Type": "application/json"
             }
         jwt_data = json.dumps(jwt_body_auth)
-        jwt_auth = requests.post(jwt_url, data=jwt_data, headers=api_headers)
-        jwt_token = jwt_auth.json()
+        jwt_request = requests.post(jwt_url, data=jwt_data, headers=api_headers)
+        jwt_response = jwt_request.json()
         jwt_values = [
-            jwt_token['access_token'],
-            jwt_token['expiration_Time']
+            jwt_response['access_token'],
+            jwt_response['expiration_Time']
             ]
         if self.env['imerex_erp.jwt_auth'].search([]).access_token:
             self.env.cr.execute("""

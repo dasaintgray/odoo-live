@@ -38,10 +38,9 @@ class ResPartner(models.Model):
     def _check_mobile(self):
         #Validate Mobile to Be 9 digit or More
         try:
-            if int(self.mobile) < 99999999:
-                raise ValidationError("That is not a valid Mobile Number, Digits must be 9 and above.")
-            else:
-                pass
+            if int(self.mobile):
+                if len(self.mobile) < 9 or len(self.mobile) > 12:
+                    raise ValidationError("That is not a valid Mobile Number")
         except ValueError:
             raise ValidationError("That is not a valid Mobile Number, Remove any special characters.")   
 
@@ -261,39 +260,20 @@ class ResPartner(models.Model):
 
     def cargo_fields(self):
         cargo_fields = [
-            'shipperFirstName',
-            'shipperLastName',
-            'shipperExt',
-            'shipperPhoneNumber',
-            'shipperMobileNo',
-            'residenceIdNumber',
-            'emailaddress',
-            'shipperphoto'
+            'shipperFirstName','shipperLastName','shipperExt','shipperPhoneNumber','shipperMobileNo',
+            'residenceIdNumber','emailaddress','shipperphoto'
             ]
         return cargo_fields
 
     def cbiz_fields(self):
         cbiz_fields = [
-            'first_name',
-            'last_name',
-            'name_ext',
-            'phone',
-            'mobile',
-            'vat',
-            'email',
-            'image_1920'
+            'first_name','last_name','name_ext','phone','mobile','vat','email','image_1920'
             ]
         return cbiz_fields
 
     def address_fields(self):
         address_fields = [
-            'street',
-            'street2',
-            'brgy',
-            'city',
-            'state_id',
-            'country_id',
-            'zip'
+            'street','street2','brgy','city','state_id','country_id','zip'
         ]
         return address_fields
     

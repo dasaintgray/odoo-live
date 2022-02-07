@@ -6,8 +6,8 @@ import requests
 from datetime import datetime
 class JWTAuth(models.Model):
     _name='imerex_erp.jwt_auth'
-    access_token = fields.Char(size=256)
-    expiration_Time = fields.Integer(size=128)
+    access_token = fields.Char()
+    expiration_Time = fields.Integer()
     
     def jwt_authenticate(self):
         jwt_url_base = "https://jwt-sb-clt.circuitmindz.com"

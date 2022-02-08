@@ -30,3 +30,4 @@ access_pos_payment_user,pos.payment user,point_of_sale.model_pos_payment,group_a
 access_restaurant_printer,restaurant.printer.user,pos_restaurant.model_restaurant_printer,group_assigned_points_of_sale_user,1,0,0,0
 access_restaurant_floor,restaurant.floor.user,pos_restaurant.model_restaurant_floor,group_assigned_points_of_sale_user,1,0,0,0
 access_restaurant_table,restaurant.table.user,pos_restaurant.model_restaurant_table,group_assigned_points_of_sale_user,1,0,0,0
+access_product_combo_user,product.combo.user,imerex_pos_combo_product.model_product_combo,group_assigned_points_of_sale_user,1,1,1,1

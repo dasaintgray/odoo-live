@@ -15,11 +15,11 @@ Installation
 
 Company
 -------
-* `Cybrosys Techno Solutions <https://cybrosys.com/>`__
+* `CircuitMindz <https://cybrosys.com/>`__
 
 Author
 -------
-Cybrosys Techno Solutions
+CircuitMindz
 
 Contacts
 --------

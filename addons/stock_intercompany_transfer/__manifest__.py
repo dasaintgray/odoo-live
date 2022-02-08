@@ -3,8 +3,8 @@
 #
 #    Cybrosys Technologies Pvt. Ltd.
 #
-#    Copyright (C) 2020-TODAY Cybrosys Technologies (<https://www.cybrosys.com>).
-#    Author: Ajmal JK (<https://www.cybrosys.com>)
+#    Copyright (C) 2020-TODAY Cybrosys Technologies (<https://www.circuitmindz.com>).
+#    Author: Ajmal JK (<https://www.circuitmindz.com>)
 #
 #    This program is free software: you can modify
 #    it under the terms of the GNU Affero General Public License (AGPL) as
@@ -29,10 +29,10 @@
                       Deliver Order/Receipt to the selected company,Inter Company Stock Transfer, Stock Transfer,
                       Create counterpart Receipt/Delivery Orders between companies""",
     'category': 'Warehouse',
-    'author': 'Cybrosys Techno Solutions',
-    'company': 'Cybrosys Techno Solutions',
-    'maintainer': 'Cybrosys Techno Solutions',
-    'website': "https://www.cybrosys.com",
+    'author': 'CircuitMindz',
+    'company': 'CircuitMindz',
+    'maintainer': 'CircuitMindz',
+    'website': "https://www.circuitmindz.com",
     'depends': ['stock', 'account'],
     'data': [
         'views/res_company_view.xml',

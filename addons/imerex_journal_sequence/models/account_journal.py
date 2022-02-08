@@ -27,8 +27,15 @@ class AccountJournal(models.Model):
 
     @api.model
     def _create_sequence(self, vals, refund=False):
-        prefix = self._get_sequence_prefix(vals['code'], refund)
-        seq_name = refund and vals['code'] + _(': Refund') or vals['code']
+        if vals['type'] == 'cash':
+            prefix = self._get_sequence_prefix('CASH', refund)
+            seq_name = refund and 'CASH' + _(': Refund') or 'CASH'
+        elif vals['type'] == 'bank':
+            prefix = self._get_sequence_prefix('BANK', refund)
+            seq_name = refund and 'BANK' + _(': Refund') or 'BANK'
+        else:
+            prefix = self._get_sequence_prefix(vals['code'], refund)
+            seq_name = refund and vals['code'] + _(': Refund') or vals['code']
         seq = {
             'name': _('%s Sequence') % seq_name,
             'implementation': 'no_gap',

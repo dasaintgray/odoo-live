@@ -122,7 +122,7 @@ class PurchaseOrder(models.Model):
         """methode to check branch of products and purchase order"""
         for order in self:
             branches = order.order_line.product_id.branch_id
-            if branches and branches != order.branch_id:
+            if branches and order.branch_id not in branches:
                 bad_products = order.order_line.product_id.filtered(
                     lambda p: p.branch_id and p.branch_id != order.branch_id)
                 raise ValidationError(_(

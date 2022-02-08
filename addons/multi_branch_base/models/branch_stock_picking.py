@@ -59,8 +59,6 @@ class StockPicking(models.Model):
             domain_return = ['&',('company_id','=', company),('usage', '=','internal')]
         return {'domain': {'location_dest_id': domain_return}}
 
-    
-
     branch_id = fields.Many2one("res.branch", string='Branch', store=True,
                                 readonly=False,
                                 compute="_compute_branch",

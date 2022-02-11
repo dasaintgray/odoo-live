@@ -9,8 +9,8 @@
                     <group>
                         <field name="date_start" />
                         <field name="state" />
-                        <field name="config_ids" options="{'no_create': True}" widget="many2many_tags" />
-                        <field name="user_ids" options="{'no_create': True}" widget="many2many_tags" groups="imerex_pos_payment_report.imerex_pos_payment_report_group" />
+                        <field name="config_ids" string ="Point of Sales" options="{'no_create': True}" widget="many2many_tags" />
+                        <field name="user_ids" options="{'no_create': True,'invisible': True}" widget="many2many_tags" groups="imerex_pos_payment_report.imerex_pos_payment_report_group" />
                     </group>
                     <group>
                         <field name="date_end" />

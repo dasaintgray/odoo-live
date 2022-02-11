@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id='imerex_multi_branch_pos_session' model='ir.ui.view'>
+        <field name='name'>view.pos.session.form.inherit</field>
+        <field name='model'>pos.session</field>
+        <field name='inherit_id' ref='point_of_sale.view_pos_session_form' />
+        <field type='xml' name='arch'>
+            <xpath expr="//field[@name='config_id']" position="after">
+                <field name='branch_id' attrs="{'readonly':True, 'invisible': [('branch_id','=', False)]}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id='imerex_multi_branch_pos_session_kanban' model='ir.ui.view'>
+        <field name='name'>view.pos.session.kanban.inherit</field>
+        <field name='model'>pos.session</field>
+        <field name='inherit_id' ref='point_of_sale.view_pos_session_kanban' />
+        <field type='xml' name='arch'>
+        <xpath expr="//field[@name='name']" position="after">
+                <field name='branch_id' attrs="{'readonly':True, 'invisible': [('branch_id','=', False)]}"/>
+        </xpath>
+        <xpath expr='//strong[@class="o_kanban_record_title"]' position="before">
+            <t t-if='branch_id'><strong class="o_kanban_record_title"><span><field name="branch_id"/>:</span></strong></t>
+        </xpath>
+        </field>
+    </record>
+
+    <record id='imerex_multi_branch_pos_session_list_select' model='ir.ui.view'>
+        <field name='name'>view.pos.session.list.select.inherit</field>
+        <field name='model'>pos.session</field>
+        <field name='inherit_id' ref='point_of_sale.view_pos_session_search' />
+        <field type='xml' name='arch'>
+        <xpath expr="//field[@name='name']" position="after">
+            <field name='branch_id' attrs="{'readonly':True, 'invisible': [('branch_id','=', False)]}"/>
+        </xpath>
+        <xpath expr='//filter[@name="user"]' position="before">
+            <filter string="Branch" name="branch_id" domain="[]" context="{'group_by': 'branch_id'}"/>
+        </xpath>
+        </field>
+    </record>
+
+    <record id='imerex_multi_branch_pos_session_tree' model='ir.ui.view'>
+        <field name='name'>view.pos.session.tree.inherit</field>
+        <field name='model'>pos.session</field>
+        <field name='inherit_id' ref='point_of_sale.view_pos_session_tree' />
+        <field type='xml' name='arch'>
+        <xpath expr="//field[@name='name']" position="after">
+            <field name='branch_id' decoration-bf="1" attrs="{'readonly':True}"/>
+        </xpath>
+        </field>
+    </record>
+</odoo>

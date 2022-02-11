@@ -24,7 +24,6 @@ class PosInvoicePaymentReportXls(models.Model):
             'target': 'new',
         }
 
-
 class ShPaymentPosReportWizard(models.TransientModel):
     _name = "sh.pos.payment.report.wizard"
     _description = 'pos payment report wizard Model'
@@ -33,20 +32,23 @@ class ShPaymentPosReportWizard(models.TransientModel):
         """ Find the earliest start_date of the latests sessions """
         # restrict to configs available to the user
         config_ids = self.env['pos.config'].search([]).ids
-        # exclude configs has not been opened for 2 days
+        # exclude configs has not been opened for 1 days
         self.env.cr.execute("""
             SELECT
-            max(start_at) as start,
+            MIN(start_at) as start,
             config_id
             FROM pos_session
             WHERE config_id = ANY(%s)
-            AND start_at > (NOW() - INTERVAL '2 DAYS')
+            AND start_at > (current_date - INTERVAL '1 DAY')
             GROUP BY config_id
         """, (config_ids,))
-        latest_start_dates = [res['start'] for res in self.env.cr.dictfetchall()]
-        # earliest of the latest sessions
-        return latest_start_dates and min(latest_start_dates) or fields.Datetime.now()
+        dates_yesterday = [res['start'] for res in self.env.cr.dictfetchall()]
+        return dates_yesterday and min(dates_yesterday) or fields.Datetime.now()
     
+    def _default_end_date(self):
+        date_end = self._default_start_date() + timedelta(days = 1)
+        return date_end
+
     @api.model
     def default_company_ids(self):
         is_allowed_companies = self.env.context.get(
@@ -54,20 +56,23 @@ class ShPaymentPosReportWizard(models.TransientModel):
         if is_allowed_companies:
             return is_allowed_companies
         return
-
-    def _get_user_domain(self):
-        user_domain = [('company_id','=',[self.env.company.id]),('groups_id','=',41)]
-        return user_domain
     
     @api.model
     def get_default_users(self):
-        user_domain = [('company_id','=',[self.env.company.id]),('groups_id','=',41)]
-        return self.env["res.users"].search(user_domain)
+        user_domain = [('company_id','=',[self.env.company.id])]
+        users = self.env["res.users"].search(user_domain)
+        if users:
+            return users
+        else:
+            raise ValidationError("""You don't have permission to view other""")
 
-    date_start = fields.Datetime(
-        string="Start Date", required=True, default=_default_start_date)
-    date_end = fields.Datetime(
-        string="End Date", required=True, default=fields.Datetime.now)
+    @api.model
+    def _get_user_domain(self):
+        user_domain = [('company_id','=',[self.env.company.id])]
+        return user_domain
+
+    date_start = fields.Datetime(string="Start Date", required=True, default=_default_start_date)
+    date_end = fields.Datetime(string="End Date", required=True, default=_default_end_date)
     state = fields.Selection([
         ('all', 'All'),
         ('open', 'Open'),

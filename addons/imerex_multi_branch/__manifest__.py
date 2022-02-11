@@ -42,6 +42,9 @@
         'views/branch_product_template_views.xml',
         'views/branch_res_partner_views.xml',
         'views/branch_sale_order_views.xml',
+        'views/branch_pos_config.xml',
+        'views/branch_pos_order.xml',
+        'views/branch_pos_session.xml',
         'views/branch_purchase_order_views.xml',
         'views/branch_res_users_views.xml',
         'views/branch_stock_picking_views.xml',
@@ -50,7 +53,7 @@
         'views/branch_account_journal.xml',
         'views/branch_account_views.xml',
         'views/branch_stock_warehouse_views.xml',
-        'views/branch_report_template.xml',
+        'views/branch_report_template.xml'
     ],
     # 'images': ['static/description/banner.jpg'],
     'license': "AGPL-3",

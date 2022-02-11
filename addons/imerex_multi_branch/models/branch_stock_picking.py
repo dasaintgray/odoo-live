@@ -32,6 +32,18 @@ class StockPicking(models.Model):
         domain_return = ['&',('id', 'in',self.env.user.branch_ids.ids),('company_id','=',self.env.company.id)]
         return domain_return
     
+    branch_id = fields.Many2one("res.branch", string='Branch', store=True,
+                                readonly=False,
+                                compute="_compute_branch",
+                                domain=_get_branch_id
+                                )
+    
+    @api.onchange('picking_type_id')
+    def change_location_dest_id(self):
+        if self.picking_type_id.code == 'internal':
+            warehouse = self.env['stock.warehouse'].search([('branch_id','=',self.env.user.branch_ids.ids),('branch_id','!=',self.branch_id.id)]).lot_stock_id
+            self.picking_type_id.default_location_dest_id = warehouse[0]
+
     @api.onchange('picking_type_id')
     def domain_location_id(self):
         company = self.env.company.id
@@ -58,18 +70,6 @@ class StockPicking(models.Model):
         else:
             domain_return = ['&',('company_id','=', company),('usage', '=','internal')]
         return {'domain': {'location_dest_id': domain_return}}
-
-    branch_id = fields.Many2one("res.branch", string='Branch', store=True,
-                                readonly=False,
-                                compute="_compute_branch",
-                                domain=_get_branch_id
-                                )
-    
-    @api.onchange('picking_type_id')
-    def change_location_dest_id(self):
-        if self.picking_type_id.code == 'internal':
-            warehouse = self.env['stock.warehouse'].search([('branch_id','=',self.env.user.branch_ids.ids),('branch_id','!=',self.branch_id.id)]).lot_stock_id
-            self.picking_type_id.default_location_dest_id = warehouse[0]
 
     @api.depends('sale_id', 'purchase_id')
     def _compute_branch(self):

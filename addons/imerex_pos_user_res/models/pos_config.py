@@ -24,6 +24,6 @@ class PosConfig(models.Model):
     def _compute_group_pos_user_id(self):
         for config in self:
             config.group_pos_user_id = self.env.ref(
-                "pos_user_restriction.group_assigned_points_of_sale_user",
+                "imerex_pos_user_res.group_assigned_points_of_sale_user",
                 "point_of_sale.group_pos_user",
             )

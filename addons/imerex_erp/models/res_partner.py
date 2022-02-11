@@ -1,5 +1,6 @@
 #Res Partner modification
 
+import string
 from odoo import api, fields, models
 from odoo.tools.misc import unique
 from odoo.exceptions import ValidationError
@@ -157,13 +158,12 @@ class ResPartner(models.Model):
 
             #concatenate address for export to CircuitTrack
             for index in range(len(address_fields)):
-                if values[address_fields[index]]:
-                    try:
-                        #for address field string type
-                        api_body['shipperaddress'] += values[address_fields[index]] + ', '
-                    except TypeError:
+                if address_fields[index]:
+                    if not type(address_fields[index]) == 'dict':
+                        api_body['shipperaddress'] += address_fields[index] + ', '
+                    else:
                         #for address field type with child models
-                        api_body['shipperaddress'] += values[address_fields[index]].name + ', '
+                        api_body['shipperaddress'] += address_fields[index].name + ', '
 
             #remove excess space from shipperaddress if exist
             if api_body['shipperaddress']:
@@ -200,31 +200,35 @@ class ResPartner(models.Model):
             cbiz_fields = self.cbiz_fields()
             #append api_body values
             for index in range(len(cargo_fields)):
-                try:
+                if cbiz_fields[index] in values:
                     if values[cbiz_fields[index]] and not cbiz_fields[index] == 'image_1920':
                         api_body[cargo_fields[index]] = values[cbiz_fields[index]]
                     elif values[cbiz_fields[index]] and cbiz_fields[index] == 'image_1920':
                         api_body[cargo_fields[index]] = 'data:image;base64,' + values[cbiz_fields[index]]
-                except KeyError:
-                    pass
 
             #Initialize updated address_fields
             address_fields = self.address_fields()
             updated_address = []
             #Get Updated Address Dict and Merge Updated Address Dict with Previous Address Dict
             for index in range(len(address_fields)):
-                try:
+                if address_fields[index] in values:
                     if values[address_fields[index]]:
                         updated_address.append(values[address_fields[index]])
-                except KeyError:
+                else:
                     updated_address.append(self[address_fields[index]])
 
             #concatenate address for export to CircuitTrack
             for index in range(len(updated_address)):
-                if updated_address[index]:
-                    try:
+                if updated_address[index]: 
+                    if type(updated_address[index]) is str:
                         api_body['shipperaddress'] += updated_address[index] + ', '
-                    except TypeError:
+                    elif type(updated_address[index]) is int:
+                        if index == 4:
+                            address = self.env['res.country.state'].search([('id','=',updated_address[index])]).name
+                        if index == 5:
+                            address = self.env['res.country'].search([('id','=',updated_address[index])]).name
+                        api_body['shipperaddress'] += address + ', '
+                    else:
                         #for address field type with child models
                         api_body['shipperaddress'] += updated_address[index].name + ', '
 
@@ -238,14 +242,14 @@ class ResPartner(models.Model):
 
             #jsonify and send api_request
             api_data = json.dumps(api_body)
-            api_request = requests.patch(apicargo['shipper_url'], data=api_data, headers=apicargo['headers'])
+            api_request = requests.put(apicargo['shipper_url'], data=api_data, headers=apicargo['headers'])
             api_response = self.api_validation(api_request)
             return api_response
 
     def api_validation(self,api_request):
         if api_request.status_code == 413:
             raise ValidationError("Attachment or Image File Size Exceeded Maximum!")
-        elif api_request.text == '' and api_request.request.method == 'PATCH':
+        elif api_request.text == '':
             raise ValidationError("Something Went Wrong with CircuitTrack")
         elif not api_request.status_code == 200:
             raise ValidationError("Syncing Issue! Please Try Again.")
@@ -255,7 +259,7 @@ class ResPartner(models.Model):
             raise ValidationError("Shipper Mobile Number Exists in CircuitTrack Database!")
         else:
             apicargo = apicargo = self.env['imerex_erp.jwt_auth'].api_headers()
-            api_refresh = requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])
+            requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])
             return api_request
 
     def cargo_fields(self):

@@ -1,20 +1,12 @@
-# -*- coding: utf-8 -*-
-# Part of Softhealer Technologies.
-
 import pytz
 from datetime import datetime,timedelta
-import logging
 from functools import partial
-
-import psycopg2
-import re
 
 from odoo import api, fields, models, tools, _
 from odoo.tools import float_is_zero, float_round
 from odoo.exceptions import ValidationError, UserError
 from odoo.http import request
 from odoo.osv.expression import AND
-import base64
 
 
 class PaymentReport(models.AbstractModel):
@@ -42,22 +34,25 @@ class PaymentReport(models.AbstractModel):
         else:
             # stop by default today 23:59:59
             date_stop = date_start + timedelta(days=1, seconds=-1)
-        account_payment_obj = self.env["pos.payment"]
-        account_journal_obj = self.env["pos.payment.method"]
-        journal_domain = []
-        if data.get('company_ids', False):
-            journal_domain.append(('company_id','in',data.get('company_ids', False)))
-        search_journals = account_journal_obj.sudo().search(journal_domain)
-        final_col_list = ["Invoice", "Customer"]
-        final_total_col_list = []
-        for journal in search_journals:
-            if journal.name not in final_col_list:
-                final_col_list.append(journal.name)
-            if journal.name not in final_total_col_list:
-                final_total_col_list.append(journal.name)
 
-        final_col_list.append("Total")
-        final_total_col_list.append("Total")
+        pos_payment_env = self.env["pos.payment"]
+        pos_payment_method_env = self.env["pos.payment.method"]
+
+        pos_payment_method_domain = []
+        if data.get('company_ids', False):
+            pos_payment_method_domain.append(('company_id','in',data.get('company_ids', False)))
+        pos_payment_method_search = pos_payment_method_env.sudo().search(pos_payment_method_domain)
+        column_name_list = ["Invoice", "Customer"]
+        column_pos_payment_value_list = []
+        
+        for pos_payment_method in pos_payment_method_search:
+            if pos_payment_method.name not in column_name_list:
+                column_name_list.append(pos_payment_method.name)
+            if pos_payment_method.name not in column_pos_payment_value_list:
+                column_pos_payment_value_list.append(pos_payment_method.name)
+
+        column_name_list.append("Total")
+        column_pos_payment_value_list.append("Total")
 
         currency = False
         grand_journal_dic = {}
@@ -93,10 +88,10 @@ class PaymentReport(models.AbstractModel):
                         [('config_id', 'in', data.get('config_ids', False))])
                     domain.append(
                         ("pos_order_id.session_id", "in", session_ids.ids))
-                payments = account_payment_obj.sudo().search(domain)
+                payments = pos_payment_env.sudo().search(domain)
                 invoice_pay_dic = {}
-                if payments and search_journals:
-                    for journal in search_journals:
+                if payments and pos_payment_method_search:
+                    for journal in pos_payment_method_search:
                         # journal wise payment first we total all bank, cash etc etc.
                         for journal_wise_payment in payments.filtered(lambda x: x.payment_method_id.id == journal.id):
                             if data.get('filter_invoice_data') and data.get('filter_invoice_data') == 'all':
@@ -256,7 +251,7 @@ class PaymentReport(models.AbstractModel):
                 total_journal_amount = {}
                 for key, value in invoice_pay_dic.items():
                     final_list.append(value)
-                    for col_name in final_total_col_list:
+                    for col_name in column_pos_payment_value_list:
                         if total_journal_amount.get(col_name, False):
                             total = total_journal_amount.get(col_name)
                             total += value.get(col_name, 0.0)
@@ -266,6 +261,7 @@ class PaymentReport(models.AbstractModel):
                             total_journal_amount.update(
                                 {col_name: value.get(col_name, 0.0)})
 
+                total_journal_amount.update({'Customer': 'Payment Total'})
                 # finally make user wise dic here.
                 search_user = self.env['res.users'].sudo().search([
                     ('id', '=', user_id)
@@ -276,7 +272,7 @@ class PaymentReport(models.AbstractModel):
                                            'grand_total': total_journal_amount}
                     })
 
-                for col_name in final_total_col_list:
+                for col_name in column_pos_payment_value_list:
                     j_total = 0.0
                     j_total = total_journal_amount.get(col_name, 0.0)
                     j_total += grand_journal_dic.get(col_name, 0.0)
@@ -288,7 +284,7 @@ class PaymentReport(models.AbstractModel):
         data.update({
             'date_start': data['date_start'],
             'date_end': data['date_end'],
-            'columns': final_col_list,
+            'columns': column_name_list,
             'user_data_dic': user_data_dic,
             'currency': currency,
             'grand_journal_dic': grand_journal_dic,
@@ -378,6 +374,7 @@ class PaymentReport(models.AbstractModel):
                 else:
                     taxes.setdefault(0, {'name': _('No Taxes'), 'tax_amount':0.0, 'base_amount':0.0, 'grand_amount':0.0})
                     taxes[0]['base_amount'] += line.price_subtotal_incl
+                    taxes[0]['grand_amount'] += line.price_subtotal_incl
         
         payment_ids = self.env["pos.payment"].search([('pos_order_id', 'in', orders.ids)]).ids
         if payment_ids:

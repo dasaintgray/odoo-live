@@ -1,6 +1,6 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# 	* pos_user_restriction
+# 	* imerex_pos_user_res
 #
 msgid ""
 msgstr ""
@@ -16,19 +16,19 @@ msgstr ""
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: \n"
 
-#. module: pos_user_restriction
-#: model:ir.model.fields,field_description:pos_user_restriction.field_pos_config__assigned_user_ids
+#. module: imerex_pos_user_res
+#: model:ir.model.fields,field_description:imerex_pos_user_res.field_pos_config__assigned_user_ids
 msgid "Assigned users"
 msgstr "Utenti assegnati"
 
-#. module: pos_user_restriction
-#: model:ir.model,name:pos_user_restriction.model_pos_config
+#. module: imerex_pos_user_res
+#: model:ir.model,name:imerex_pos_user_res.model_pos_config
 msgid "Point of Sale Configuration"
 msgstr "Configurazione punto vendita"
 
-#. module: pos_user_restriction
-#: model:ir.model.fields,help:pos_user_restriction.field_pos_config__assigned_user_ids
-#: model_terms:ir.ui.view,arch_db:pos_user_restriction.pos_config_view_form_users
+#. module: imerex_pos_user_res
+#: model:ir.model.fields,help:imerex_pos_user_res.field_pos_config__assigned_user_ids
+#: model_terms:ir.ui.view,arch_db:imerex_pos_user_res.pos_config_view_form_users
 msgid ""
 "Restrict some users to only access their assigned points of sale. In order "
 "to apply the restriction, the user needs the 'User: Assigned POS Only' group"
@@ -37,22 +37,22 @@ msgstr ""
 "assegnati. Per applicare la restrizione, l'utente necessita il gruppo "
 "'Utente: solamente POS assegnati'"
 
-#. module: pos_user_restriction
-#: model:res.groups,comment:pos_user_restriction.group_assigned_points_of_sale_user
+#. module: imerex_pos_user_res
+#: model:res.groups,comment:imerex_pos_user_res.group_assigned_points_of_sale_user
 msgid "The user will have access to her assigned points of sale."
 msgstr "L'utente avrà accesso ai propri punti vendita assegnati."
 
-#. module: pos_user_restriction
-#: model:res.groups,name:pos_user_restriction.group_assigned_points_of_sale_user
+#. module: imerex_pos_user_res
+#: model:res.groups,name:imerex_pos_user_res.group_assigned_points_of_sale_user
 msgid "User: Assigned POS Only"
 msgstr "Utente: solamente POS assegnati"
 
-#. module: pos_user_restriction
-#: model_terms:ir.ui.view,arch_db:pos_user_restriction.pos_config_view_form_users
+#. module: imerex_pos_user_res
+#: model_terms:ir.ui.view,arch_db:imerex_pos_user_res.pos_config_view_form_users
 msgid "Users"
 msgstr "Utenti"
 
-#. module: pos_user_restriction
-#: model_terms:ir.ui.view,arch_db:pos_user_restriction.pos_config_view_form_users
+#. module: imerex_pos_user_res
+#: model_terms:ir.ui.view,arch_db:imerex_pos_user_res.pos_config_view_form_users
 msgid "Users assigned to this point of sale"
 msgstr "Utenti assegnati a questo punto vendita"

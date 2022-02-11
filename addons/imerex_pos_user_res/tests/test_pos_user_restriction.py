@@ -29,7 +29,7 @@ class TestUserRestriction(SavepointCase):
                         0,
                         [
                             cls.env.ref(
-                                "pos_user_restriction.group_assigned_points_of_sale_user"
+                                "imerex_pos_user_res.group_assigned_points_of_sale_user"
                             ).id
                         ],
                     )
@@ -69,7 +69,7 @@ class TestUserRestriction(SavepointCase):
         self.assertFalse(pos_configs)
 
         self.assingned_group = self.env.ref(
-            "pos_user_restriction.group_assigned_points_of_sale_user"
+            "imerex_pos_user_res.group_assigned_points_of_sale_user"
         )
         self.assertEqual(self.assingned_group, self.pos_config_main.group_pos_user_id)
 

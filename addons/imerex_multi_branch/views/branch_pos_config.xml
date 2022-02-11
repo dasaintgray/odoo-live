@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id='imerex_multi_branch_pos_config' model='ir.ui.view'>
+        <field name='name'>view.pos.config.form.inherit</field>
+        <field name='model'>pos.config</field>
+        <field name='inherit_id' ref='point_of_sale.pos_config_view_form' />
+        <field type='xml' name='arch'>
+            <xpath expr="//div[3]" position="inside">
+                <div class="col-12 col-lg-6 o_setting_box" title="Company Branch">
+                    <div class="o_setting_right_pane" id="branch_id">
+                        <span class="o_form_label">Branch</span>
+                        <div class="text-muted">
+                            Assign Specific Company Branch for this POS Terminal
+                        </div>
+                        <div>
+                        <field name='branch_id' />
+                        </div>
+                    </div>
+                </div>
+                <!-- 
+                <div class="col-12 col-lg-6 o_setting_box">
+                    <div class="o_setting_left_pane">
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <div class="o_form_label">
+                                <label for='branch_id' />
+                            </div>
+                            <field name='branch_id' />
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_right_pane" attrs="{'invisible': [('sh_enable_on_hand_qty', '!=', True)]}">
+                            <div class="o_form_label">
+                                <label for="sh_manage_stock" />
+                            </div>
+                            <field name='sh_manage_stock' widget='radio' />
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box"
+                            title="Employees can scan their badge or enter a PIN to log in to a PoS session. These credentials are configurable in the *HR Settings* tab of the employee form.">
+                        <div class="o_setting_left_pane">
+                            <field name="module_pos_hr" attrs="{'readonly': [('has_active_session','=', True)]}"/>
+                        </div>
+                        <div class="o_setting_right_pane" id="login_with_employees">
+                            <span class="o_form_label">Authorized Employees</span>
+                            <div class="text-muted">
+                                Use employee credentials to log in to the PoS session and switch cashier
+                            </div>
+                            <button string="Save" type="object" name="execute" class="oe_highlight" id="btn_use_employees" attrs="{'invisible': [('module_pos_hr','=',False)]}" />
+                        </div>
+                    </div>                   
+                </div>
+                -->
+            </xpath>
+        </field>
+    </record>
+</odoo>

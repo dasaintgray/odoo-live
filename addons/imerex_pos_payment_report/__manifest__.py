@@ -10,7 +10,7 @@
     "summary": "Point Of Sale Payment Report for Imerex",
     "description": """Payment Summary Report for Imerex""",
     "version": "1",
-    "depends": ["point_of_sale", "account"],
+    "depends": ["point_of_sale", "account",'base', 'sale_management', 'purchase', 'stock'],
     "application": True,
     "data": [
         "security/payment_report_security.xml",

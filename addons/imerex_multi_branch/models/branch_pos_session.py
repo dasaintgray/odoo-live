@@ -31,15 +31,15 @@ class PosSession(models.Model):
         pos_session_override = super(PosSession,self)._create_cash_statement_lines_and_cash_move_lines(vals)
         #add branch id on cash journals
         if 'split_cash_statement_lines' in vals:
-            if pos_session_override['split_cash_statement_lines'][self.cash_register_id]['id']:
+            if self.cash_register_id in pos_session_override['split_cash_statement_lines']:
                 pos_session_override['split_cash_statement_lines'][self.cash_register_id]['branch_id'] = self.branch_id.id
         if 'combine_cash_statement_lines' in vals:
-            if pos_session_override['combine_cash_statement_lines'][self.cash_register_id]['id']:
+            if self.cash_register_id in pos_session_override['combine_cash_statement_lines']:
                 pos_session_override['combine_cash_statement_lines'][self.cash_register_id]['branch_id'] = self.branch_id.id      
         if 'split_cash_receivable_lines' in vals:
-            if pos_session_override['split_cash_receivable_lines'][self.cash_register_id]['id']:
+            if self.cash_register_id in pos_session_override['split_cash_receivable_lines']:
                 pos_session_override['split_cash_receivable_lines'][self.cash_register_id]['branch_id'] = self.branch_id.id
         if 'combine_cash_receivable_lines' in vals:
-            if pos_session_override['combine_cash_receivable_lines'][self.cash_register_id]['id']:
+            if self.cash_register_id in pos_session_override['combine_cash_receivable_lines']:
                 pos_session_override['combine_cash_receivable_lines'][self.cash_register_id]['branch_id'] = self.branch_id.id
         return pos_session_override

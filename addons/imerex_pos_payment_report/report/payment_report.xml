@@ -1,186 +1,267 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="imerex_pos_payment_report_doc">
-        <t t-call="web.html_container">
-            <t t-call="web.external_layout">
-                <div class="page">
-                    <div class="oe_structure" />
-                    <div class="row">
-                        <div class="col-12 mx-auto">
-                            <div class="text-center">
-                                <b>
-                                    <h4>Summary Report</h4>
-                                </b>
-                                <b>
-                                    <span t-esc="date_start" t-options="{'widget': 'datetime'}" />
+	<template id="imerex_pos_payment_report_doc">
+		<t t-call="web.html_container">
+			<t t-call="web.external_layout">
+				<div class="page">
+					<div class="oe_structure" />
+					<div class="row">
+						<div class="col-12 mx-auto">
+							<div class="text-center">
+								<b>
+									<h4>Summary Report</h4>
+								</b>
+								<b>
+									<span t-esc="date_start" t-options="{'widget': 'datetime'}" />
                                     To
-                                    <span t-esc="date_end" t-options="{'widget': 'datetime'}" />
-                                </b>
-                            </div>
-                        </div>
-                    </div>
-                    <br />
-                    <br />
-                    <t t-foreach="user_data_dic.keys()" t-as="user">
-                    <t t-set="pay_list" t-value="user_data_dic.get(user).get('pay',[])" />
-                    <t t-if="pay_list">
-                        <center>
-                            <b>
-                                <span>User :</span>
-                                <span t-esc="user" />
-                            </b>
-                        </center>
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th t-foreach="columns" t-as="column">
-                                    <t t-if="column in ['Invoice','Customer']">
-                                        <t t-esc="column" />
-                                    </t>
-                                    <t t-if="column not in ['Invoice','Customer']">
-                                        <div align='right'><t t-esc="column" /></div>
-                                    </t>                                    
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-if="user_data_dic.get(user,False)">
-                                    <tr t-foreach="pay_list" t-as="p">
-                                        <td t-foreach="columns" t-as="column">
-                                            <t t-if="column in ['Invoice','Customer']">
-                                                <span t-esc="p.get(column,0)" />
-                                            </t>
-                                            <t t-if="column not in ['Invoice','Customer']">
-                                            <div align='right'>
-                                                <span t-esc="'%.2f'%p.get(column,0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' />
-                                            </div>    
-                                            </t>
-                                        </td>
-                                    </tr>
-                                </t>
-                                <t t-if="user_data_dic.get(user,False)">
-                                    <t t-set="grand_total" t-value="user_data_dic.get(user).get('grand_total',{})" />
-                                    <t t-if="grand_total">
-                                        <tr t-if="grand_total">
-                                            <td align='right' t-foreach="columns" t-as="column">
-                                                <t t-if="column in ['Customer']">
-                                                    <strong><span t-esc="grand_total.get(column,0)" /></strong>
-                                                </t>
-                                                <t t-if="column not in ['Invoice','Customer']">
-                                                    <span t-esc="'%.2f'%grand_total.get(column,0)" t-esc-options='{"widget": "monetary", "display_currency": "currency"}' />
-                                                </t>
+                                    
+									<span t-esc="date_end" t-options="{'widget': 'datetime'}" />
+								</b>
+							</div>
+						</div>
+					</div>
+					<br />
+					<t t-foreach="pos_terminal_dict.keys()" t-as="pos_terminal">
+						<t t-if="list(pos_terminal_dict.get(pos_terminal).values())">
+							<center>
+								<strong>
+									<h5>
+										<span>Point of Sale Terminal :</span>
+										<span t-esc="pos_terminal" />
+									</h5>
+								</strong>
+							</center>
+							<t t-foreach="pos_terminal_dict.get(pos_terminal).keys()" t-as="pos_session">
+								<t t-set="user" t-value="pos_terminal_dict.get(pos_terminal).get(pos_session).get('user',[])" />
+								<t t-set="pay_list" t-value="pos_terminal_dict.get(pos_terminal).get(pos_session).get('pay',[])"/>
+								<t t-set="grand_total" t-value="pos_terminal_dict.get(pos_terminal).get(pos_session).get('grand_total',[])"/>
+								<t t-if="pay_list">
+									<center>
+										<b>
+											<div>
+												<span>User :</span>
+												<span t-esc="user" /> | 
+                                                
+												<span>Session ID:</span>
+												<span t-esc="pos_session" />
+											</div>
+										</b>
+									</center>
+									<table class="table table-sm">
+										<thead>
+											<tr>
+												<th t-foreach="columns" t-as="column">
+													<t t-if="column in ['Invoice','Customer']">
+														<t t-esc="column" /></t>
+													<t t-if="column not in ['Invoice','Customer']">
+														<div align='right'>
+															<t t-esc="column" />
+														</div>
+													</t>
+												</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr t-foreach="pay_list" t-as="p">
+												<td t-foreach="columns" t-as="column">
+													<t t-if="column in ['Invoice','Customer']">
+														<span t-esc="p.get(column,0)" />
+													</t>
+													<t t-if="column not in ['Invoice','Customer']">
+														<div align='right'>
+															<span t-esc="'%.2f'%p.get(column,0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' />
+														</div>
+													</t>
+												</td>
+											</tr>
+											<tr t-if="grand_total">
+												<td align='right' t-foreach="columns" t-as="column">
+													<t t-if="column in ['Customer']">
+														<strong>
+															<span t-esc="grand_total.get(column,0)" />
+														</strong>
+													</t>
+													<t t-if="column not in ['Invoice','Customer']">
+														<span t-esc="'%.2f'%grand_total.get(column,0)" t-esc-options='{"widget": "monetary", "display_currency": "currency"}' />
+													</t>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</t>
+							</t>
+						</t>
+					</t>
+
+					<div class="clearfix">
+						<div id="total" class="row">
+							<div t-attf-class="#{'col-6' if report_type != 'html' else 'col-sm-7 col-md-6'} ml-auto">
+								<table class="table table-sm" style="page-break-inside: avoid;">
+									<t t-if="grand_journal_dict">
+										<t t-foreach="columns" t-as="c">
+											<t t-if="c not in ['Invoice','Customer','Total']">
+												<tr class="border-black o_subtotal" t-if="grand_journal_dict.get(c,False)">
+													<td>
+														<strong>
+															<t t-esc="c" />
+														</strong>
+													</td>
+													<td class="text-right">
+														<td align='right'>
+															<t t-esc="'%.2f'%grand_journal_dict.get(c,0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' />
+														</td>
+													</td>
+												</tr>
+											</t>
+										</t>
+										<tr t-if="grand_journal_dict.get('Refund',False)" class="border-black o_subtotal">
+											<td>Refund</td>
+											<td class="text-right">
+												<td align='right'>
+													<t t-esc="'%.2f'%grand_journal_dict.get('Refund',0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' />
+												</td>
+											</td>
+										</tr>
+										<t t-foreach="taxes" t-as="tax">
+											<tr class="border-black o_subtotal" style="">
+												<td>
+													<strong>Subtotal without Tax</strong>
+												</td>
+												<td class="text-right">
+													<td align='right'>
+														<t t-esc="tax['base_amount']" t-options="{'widget': 'float', 'precision': currency_precision}"/>
+													</td>
+												</td>
+											</tr>
+											<tr class="border-black o_total">
+												<td>
+													<t t-esc="tax['name']" />
+												</td>
+												<td class="text-right">
+													<td align='right'>
+														<t t-esc="tax['tax_amount']" t-options="{'widget': 'float', 'precision': currency_precision}"/>
+													</td>
+												</td>
+											</tr>
+											<tr class="border-black o_total">
+												<td>
+													<strong>Grand Total</strong>
+												</td>
+												<td class="text-right">
+													<td align='right'>
+														<t t-esc="tax['grand_amount']" t-options="{'widget': 'float', 'precision': currency_precision}"/>
+													</td>
+												</td>
+											</tr>
+										</t>
+									</t>
+								</table>
+							</div>
+						</div>
+					</div>
+                    <!-- <br />
+                    <t t-foreach="pos_stock_movement.keys()" t-as="pos_terminal">
+                        <t t-if="pos_stock_movement.get(pos_terminal)">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <center>
+                                        <h4>
+                                            <b>POS: <t t-esc="pos_terminal"/> - Stock Movement Report</b>
+                                        </h4>
+                                    </center>
+                                    <table class="table" align="center" width="100%"
+                                        style='border:1px solid black;border-collapse: collapse;'>
+                                        <tr style="border: 2px solid black !important;">
+                                            <th style="border: 2px solid black !important;">Name</th>
+                                            <th style="border: 2px solid black !important;">Quantity On Hand</th>
+                                            <th style="border: 2px solid black !important;">Forecasted</th>
+                                            <th style="border: 2px solid black !important;">Demand</th>
+                                            <th style="border: 2px solid black !important;">Reserved</th>
+                                        </tr>
+                                        <tr t-foreach="pos_stock_movement.get(pos_terminal)" t-as="vals" style="border:1px">
+                                            <td style='border:2px solid black'>
+                                                <t t-if="vals['name']">
+                                                    <t t-esc="vals['name']" /></t>
+                                            </td>
+                                            <td style='border:2px solid black'>
+                                                <t t-if="vals['qty_available']">
+                                                    <t t-esc="vals['qty_available']" /></t>
+                                            </td>
+                                            <td style='border:2px solid black'>
+                                                <t t-if="vals['incoming_qty']">
+                                                    <t t-esc="vals['incoming_qty']" /></t>
+                                            </td>
+                                            <td style='border:2px solid black'>
+                                                <t t-if="vals['outgoing_qty']">
+                                                    <t t-esc="vals['outgoing_qty']" /></t>
+                                            </td>
+                                            <td style='border:2px solid black'>
+                                                <t t-if="vals['reserved_qty']">
+                                                <t t-esc="vals['reserved_qty']" /></t>
                                             </td>
                                         </tr>
-                                    </t>
-                                </t>
-                            </tbody>
-                        </table>
-                    </t>
-                    </t>
-                    <div class="clearfix">
-                        <div id="total" class="row">
-                            <div t-attf-class="#{'col-6' if report_type != 'html' else 'col-sm-7 col-md-6'} ml-auto">
-                                <table class="table table-sm" style="page-break-inside: avoid;">
-                                <t t-foreach='taxes' t-as='tax'>
-                                    <tr class="border-black o_subtotal" style="">
-                                        <td><strong>Subtotal</strong></td>
-                                        <td class="text-right">
-                                            <td align='right'><t t-esc="tax['base_amount']" t-options="{'widget': 'float', 'precision': currency_precision}"/></td>
-                                        </td>
-                                    </tr>
-                                    <tr class="border-black o_total">
-                                        <td><t t-esc="tax['name']" /></td>
-                                        <td class="text-right">
-                                            <td align='right'><t t-esc="tax['tax_amount']" t-options="{'widget': 'float', 'precision': currency_precision}"/></td>
-                                        </td>
-                                    </tr>
-                                    <tr class="border-black o_total">
-                                        <td><strong>Grand Total</strong></td>
-                                        <td class="text-right">
-                                            <td align='right'><t t-esc="tax['grand_amount']" t-options="{'widget': 'float', 'precision': currency_precision}"/></td>
-                                        </td>
-                                    </tr>
-                                </t>
-                                </table>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <br />
-                    <t t-if="grand_journal_dic">
-                        <h4>Payment Methods</h4>
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-foreach="columns" t-as="c">
-                                    <t t-if="c not in ['Invoice','Customer','Total']">
-                                        <tr t-if="grand_journal_dic.get(c,False)">
-                                            <td>
-                                                <t t-esc="c" />
-                                            </td>
-                                            <td>
-                                                <span t-esc="'%.2f'%grand_journal_dic.get(c,0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' />
-                                            </td>
-                                        </tr>
+                        </t>
+                    </t> -->
+					<!--<br /><t t-if="grand_journal_dict"><h4>Payment Methods Summary</h4><table class="table table-sm"><thead><tr><th>Name</th><th>Total</th></tr></thead><tbody><tr t-if="grand_journal_dict.get('Total',False)"><td><strong>Total</strong></td><td><span t-esc="'%.2f'%grand_journal_dict.get('Total',0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' /></td></tr><tr t-if="grand_journal_dict.get('Refund',False)"><td>Refund</td><td><span t-esc="'%.2f'%grand_journal_dict.get('Refund',0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' /></td></tr></tbody></table></t> -->
+					<br />
+					<h4>Products Sold</h4>
+					<table  class="table table-sm">
+						<thead>
+							<tr>
+								<th>Product</th>
+								<th>Quantity</th>
+								<th>Price Unit</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr t-foreach='products' t-as='line'>
+								<t t-set="internal_reference" t-value="line['code'] and '[%s] ' % line['code'] or ''" />
+                                <td>
+                                    <t t-esc="internal_reference" />
+                                    <t t-esc="line['product_name']" />
+                                </td>
+                                <td>
+                                    <t t-esc="line['quantity']" />
+                                    <t t-if='line["uom"] != "Units"'>
+                                        <t t-esc='line["uom"]' />
                                     </t>
-                                </t>
-                                <tr t-if="grand_journal_dic.get('Total',False)">
-                                    <td><strong>Total</strong></td>
-                                    <td>
-                                        <span t-esc="'%.2f'%grand_journal_dic.get('Total',0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' />
-                                    </td>
-                                </tr>
-                                <tr t-if="grand_journal_dic.get('Refund',False)">
-                                    <td>Refund</td>
-                                    <td>
-                                        <span t-esc="'%.2f'%grand_journal_dic.get('Refund',0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' />
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </t>
-
-                    <br />
-                    <h4>Products Sold</h4>
-                    <table  class="table table-sm">
-                        <thead><tr>
-                            <th>Product</th>
-                            <th>Quantity</th>
-                            <th>Price Unit</th>
-                        </tr></thead>
-                        <tbody>
-                        <tr t-foreach='products' t-as='line'>
-                            <t t-set="internal_reference" t-value="line['code'] and '[%s] ' % line['code'] or ''" />
-                            <td><t t-esc="internal_reference" /><t t-esc="line['product_name']" /></td>
-                            <td>
-                                <t t-esc="line['quantity']" />
-                                <t t-if='line["uom"] != "Units"'>
-                                    <t t-esc='line["uom"]' /> 
-                                </t>
-                            </td>
-                            <td>
-                                <t t-esc='line["price_unit"]' />
-                            <t t-if='line["discount"] != 0'>
-                                Disc: <t t-esc='line["discount"]' />%
-                            </t>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </t>
-        </t>
-    </template>
-
-    <record id="imerex_pos_payment_report_action" model="ir.actions.report">
-        <field name="name">Detailed Report</field>
-        <field name="model">report.imerex_pos_payment_report.imerex_pos_payment_report_doc</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">imerex_pos_payment_report.imerex_pos_payment_report_doc</field>
-        <field name="print_report_name">'Detailed Report'</field>
-    </record>
+                                </td>
+                                <td>
+                                    <t t-esc='line["price_unit"]' />
+                                    <t t-if='line["discount"] != 0'>
+                                        Disc: 
+                                        <t t-esc='line["discount"]' />%
+                                    </t>
+                                </td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</t>
+		</t>
+	</template>
+	<record id="imerex_pos_payment_report_action" model="ir.actions.report">
+		<field name="name">Detailed Report</field>
+		<field name="model">report.imerex_pos_payment_report.imerex_pos_payment_report_doc</field>
+		<field name="report_type">qweb-pdf</field>
+		<field name="report_name">imerex_pos_payment_report.imerex_pos_payment_report_doc</field>
+		<field name="print_report_name">'Detailed Report'</field>
+	</record>
+            <record id="product_template_form_view_inheirt" model="ir.ui.view">
+            <field name="name">product.template.inherit</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" 
+                ref="product.product_template_form_view"/>
+            <field name="arch" type="xml">
+            <xpath expr="//page/group[@name='inventory']" position="after">
+                <group>
+                    <field name="reserved_qty"/>
+                    <field name="available_qty"/>
+                </group>
+            </xpath>
+            </field>
+        </record>
 </odoo>

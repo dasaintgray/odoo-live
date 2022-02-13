@@ -10,7 +10,7 @@
                         <field name="date_start" />
                         <field name="state" />
                         <field name="config_ids" string ="Point of Sales" options="{'no_create': True}" widget="many2many_tags" />
-                        <field name="user_ids" options="{'no_create': True,'invisible': True}" widget="many2many_tags" groups="imerex_pos_payment_report.imerex_pos_payment_report_group" />
+                        <field name="user_ids" options="{'no_create': True}"  attr="{'invisible': True}" widget="many2many_tags"/>
                     </group>
                     <group>
                         <field name="date_end" />
@@ -20,7 +20,7 @@
                 </group>
                 <footer>
                     <button name="print_report" string="Print" class="oe_highlight" type="object" />
-                    <button name="print_xls_report" string="Print In XLS" class="oe_highlight" type="object" />
+                    <!-- <button name="print_xls_report" string="Print In XLS" class="oe_highlight" type="object" /> -->
                     <button string="Cancel" class="btn-default" special="cancel" />
                 </footer>
             </form>
@@ -34,5 +34,5 @@
         <field name="target">new</field>
     </record>
 
-    <menuitem id="imerex_pos_payment_report_wizard_menuitem" action="imerex_pos_payment_report_wizard_action" parent="point_of_sale.menu_point_rep" groups="" sequence="99" />
+    <menuitem id="imerex_pos_payment_report_wizard_menuitem" action="imerex_pos_payment_report_wizard_action" parent="point_of_sale.menu_point_rep" groups="imerex_pos_payment_report.imerex_pos_payment_report_group" sequence="99" />
 </odoo>

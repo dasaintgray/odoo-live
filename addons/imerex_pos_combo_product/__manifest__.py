@@ -10,9 +10,9 @@
         Product can be sold as a Combo in POS.
     """,
     'category': 'Point Of Sale',
-    'author': 'Aurayan Consulting Services',
+    'author': 'CircuitMindz',
     'website': '',
-    'depends': ['pos_restaurant', 'imerex_pos_stock_info','era_pos_tax_invoice'],
+    'depends': ['pos_restaurant', 'imerex_pos_stock_info','era_pos_tax_invoice','sale'],
     'data': [
         'security/ir.model.access.csv',
         'views/point_of_sale.xml',

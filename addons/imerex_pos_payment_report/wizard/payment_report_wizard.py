@@ -59,7 +59,7 @@ class ShPaymentPosReportWizard(models.TransientModel):
     
     @api.model
     def get_default_users(self):
-        user_domain = [('company_id','=',[self.env.company.id])]
+        user_domain = [('company_ids','in',self.default_company_ids())]
         users = self.env["res.users"].search(user_domain)
         if users:
             return users
@@ -68,7 +68,7 @@ class ShPaymentPosReportWizard(models.TransientModel):
 
     @api.model
     def _get_user_domain(self):
-        user_domain = [('company_id','=',[self.env.company.id])]
+        user_domain = [('company_id','in',self.default_company_ids())]
         return user_domain
 
     date_start = fields.Datetime(string="Start Date", required=True, default=_default_start_date)
@@ -87,7 +87,7 @@ class ShPaymentPosReportWizard(models.TransientModel):
         )
     company_ids = fields.Many2many(
         'res.company', string='Companies', default=default_company_ids)
-    config_ids = fields.Many2many('pos.config', string='POS Configuration', required=True, default=lambda s: s.env['pos.config'].search([]))
+    config_ids = fields.Many2many('pos.config', string='POS Configuration', required=True, default=lambda s: s.env['pos.config'].search([]),domain=_get_user_domain)
     filter_invoice_data = fields.Selection([('all','Both'),('with_invoice','With Invoice'),('wo_invoice','Without Invoice')],string='POS Payments Include',default='all')
 
     # @api.model

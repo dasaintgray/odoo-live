@@ -10,6 +10,7 @@ class ProductTemplate(models.Model):
 
     sub_combo_product_line_ids = fields.One2many('product.combo', 'product_template_id', string='Sub Products', copy=False)
     is_combo = fields.Boolean('Use as Combo', copy=False)
+    hide_in_sales_module = fields.Boolean('Hide in Sales Module', copy=False)
 
     @api.constrains('sub_combo_product_line_ids')
     def check_category_lines(self):
@@ -24,7 +25,6 @@ class ProductTemplate(models.Model):
                 raise UserError(_("You can't create duplicated required product category line."))
             if len(list(set([categ_id for categ_id in unreq_categ_list if unreq_categ_list.count(categ_id) > 1]))) > 0:
                 raise UserError(_("You can't create duplicated un-required product category line."))
-
 
 class SubProductCombo(models.Model):
     _name = "product.combo"
@@ -75,3 +75,11 @@ class SubProductCombo(models.Model):
         for rec in self:
             if rec.no_of_items <= 0:
                 raise ValidationError(_('No of items Value cannot be less than 0.'))
+
+class SalesOrder(models.Model):
+    _inherit = 'sale.order.line'
+    
+    product_id = fields.Many2one(
+        domain="[('sale_ok', '=', True),'&amp;',('hide_in_sales_module','=',False), '|', ('company_id', '=', False), ('company_id', '=', company_id)]",)  # Unrequired company
+    product_template_id = fields.Many2one(
+        domain=[('sale_ok', '=', True),('hide_in_sales_module','=',False)])

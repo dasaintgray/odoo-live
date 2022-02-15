@@ -23,10 +23,6 @@
 import logging
 from odoo import models, fields
 
-
-_logger = logging.getLogger(__name__)
-
-
 class Branch(models.Model):
     """res branch"""
     _name = "res.branch"
@@ -51,3 +47,7 @@ class Branch(models.Model):
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'The Branch name must be unique !')
     ]
+
+    def copy(self):
+        branch = super(Branch,self).copy({'name': self.name + ' copy'})
+        return branch

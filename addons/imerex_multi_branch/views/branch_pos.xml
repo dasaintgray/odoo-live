@@ -1,0 +1,8 @@
+<odoo>
+    <template id="assets" name="branch_assets" inherit_id="point_of_sale.assets">
+        <xpath expr="." position="inside">
+            <script type="text/javascript"
+                src="/imerex_multi_branch/static/src/js/pos_branch.js" />
+        </xpath>
+    </template>
+</odoo>

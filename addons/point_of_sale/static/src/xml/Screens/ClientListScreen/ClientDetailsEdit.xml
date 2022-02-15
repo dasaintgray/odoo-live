@@ -17,8 +17,8 @@
                    placeholder="Name" t-on-change="captureChange" />
             <div class="client-details-box clearfix">
                 <div class="client-details-left">
-                    <!-- <div class="client-detail">
-                        <span class="label" attr='invisible'>Street</span>
+                    <div class="client-detail">
+                        <span class="label">Street</span>
                         <input class="detail client-address-street" name="street"
                                t-on-change="captureChange" t-att-value="props.partner.street || ''"
                                placeholder="Street" />
@@ -47,7 +47,7 @@
                                     <t t-esc="state.name" />
                                 </option>
                             </t>
-                        </select> 
+                        </select>
                     </div>
                     <div class="client-detail">
                         <span class="label">Country</span>
@@ -61,10 +61,10 @@
                                 </option>
                             </t>
                         </select>
-                    </div> -->
+                    </div>
                 </div>
                 <div class="client-details-right">
-                    <!-- <div class="client-detail">
+                    <div class="client-detail">
                         <span class="label">Language</span>
                         <select class="detail client-lang needsclick" name="lang"
                                 t-on-change="captureChange">
@@ -110,8 +110,8 @@
                                 </option>
                             </t>
                         </select>
-                    </div> -->
-                </div> 
+                    </div>
+                </div>
             </div>
         </section>
     </t>

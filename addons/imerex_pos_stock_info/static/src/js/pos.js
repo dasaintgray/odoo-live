@@ -12,11 +12,11 @@ odoo.define('imerex_pos_stock_info.pos', function (require) {
         model: 'product.product',
         fields: ['id', 'qty_available', 'virtual_available'],
         domain: [['available_in_pos', '=', true]],
-        loaded: function (self, all_on_hand_qty) {
-            _.each(all_on_hand_qty, function (product) {
-                self.db.on_hand_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0]
-            })
-        }
+        // loaded: function (self, all_on_hand_qty) {
+        //     _.each(all_on_hand_qty, function (product) {
+        //         self.db.on_hand_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0]
+        //     })
+        // }
     })
     DB.include({
         init: function (options) {
@@ -155,12 +155,12 @@ odoo.define('imerex_pos_stock_info.pos', function (require) {
                 if (this.env.pos.config.sh_enable_on_hand_qty) {
                     var all_on_hand_qty = this.env.pos.db.on_hand_qty
                     var orderlines = self.env.pos.get_order().get_orderlines()
-                    console.log(all_on_hand_qty)
+                    // console.log(all_on_hand_qty)
                     _.each(all_on_hand_qty, function (key, on_had_qty) {
                         _.each(orderlines, function (line) {
                             if (line) {
                                 if (on_had_qty == line.product.id) {
-                                    console.log(line)
+                                    // console.log(line)
                                     if (line.product.type == 'product') {
                                         key[0] = key[0] - line.quantity
                                         key[1] = key[1] - line.quantity

@@ -36,8 +36,13 @@ class PosConfig(models.Model):
         #reattach Odoo PosConfig data and code
         return pos_config
 
+    def copy(self):
+        #Change name when duplicating PosConfig
+        pos_config = super(PosConfig, self).copy({'name': self.name + ' copy'})
+        return pos_config
+
     def branch_checking(self,vals):
-        branch_check = self.env['res.branch'].search([('company_id','=',self.company_id.id)]).company_id
+        branch_check = self.env['res.branch'].search(['|',('company_id','=',self.company_id.id),('company_id','=',self.env.company.id)]).company_id
         if 'branch_id' in vals:
             if not vals['branch_id'] and self.company_id == branch_check:
                 raise ValidationError(_("""The company: %(company)s has branch setup. Please assign a Branch""",

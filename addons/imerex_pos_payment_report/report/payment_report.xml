@@ -35,24 +35,48 @@
 								<t t-set="user" t-value="pos_terminal_dict.get(pos_terminal).get(pos_session).get('user',[])" />
 								<t t-set="pay_list" t-value="pos_terminal_dict.get(pos_terminal).get(pos_session).get('pay',[])"/>
 								<t t-set="grand_total" t-value="pos_terminal_dict.get(pos_terminal).get(pos_session).get('grand_total',[])"/>
-								<t t-if="pay_list">
+								<t t-if="user">
 									<center>
-										<b>
-											<div>
-												<span>User :</span>
-												<span t-esc="user" /> | 
-                                                
-												<span>Session ID:</span>
-												<span t-esc="pos_session" />
-											</div>
-										</b>
+										<t t-if="pos_terminal_dict.get(pos_terminal).get(pos_session).get('state',[]) == 'closed'">
+											<t t-if="pos_terminal_dict.get(pos_terminal).get(pos_session).get('cash_register',[])">
+												<div> Cash In/Out:</div>
+												<t t-foreach="pos_terminal_dict.get(pos_terminal).get(pos_session).get('cash_register').keys()" t-as="cash_journal">
+													<t t-set="cash" t-value="pos_terminal_dict.get(pos_terminal).get(pos_session).get('cash_register').get(cash_journal,[])"/>
+													<t t-if="cash.get('payment_ref') != pos_session">
+														<div>Amount: <t t-esc="'%.2f'%cash.get('amount')"/> Reason: <t t-esc="cash.get('payment_ref')"/></div>													
+													</t>
+												</t>
+											</t>
+										</t>
+										<div>
+											<span>User :</span>
+											<span t-esc="user" /> | 
+											<span>Session ID:</span>
+											<span t-esc="pos_session" /> |
+											<span>State:
+												<t t-if="pos_terminal_dict.get(pos_terminal).get(pos_session).get('state',[]) == 'closed'">
+													CLOSED |
+												</t>
+												<t t-else="">
+													OPEN
+												</t>
+											</span>
+											<t t-if="pos_terminal_dict.get(pos_terminal).get(pos_session).get('state',[]) == 'closed'">
+												<span>Opening:
+													<t t-esc="pos_terminal_dict.get(pos_terminal).get(pos_session).get('cash_start',[])" t-esc-options='{"widget": "monetary", "display_currency": currency}'/>
+													| Ending:
+													<t t-esc="pos_terminal_dict.get(pos_terminal).get(pos_session).get('cash_end_real',[])" t-esc-options='{"widget": "monetary", "display_currency": currency}'/>
+												</span>
+											</t>
+										</div>
 									</center>
 									<table class="table table-sm">
 										<thead>
 											<tr>
 												<th t-foreach="columns" t-as="column">
 													<t t-if="column in ['Invoice','Customer']">
-														<t t-esc="column" /></t>
+														<t t-esc="column" />
+													</t>
 													<t t-if="column not in ['Invoice','Customer']">
 														<div align='right'>
 															<t t-esc="column" />
@@ -159,61 +183,59 @@
 							</div>
 						</div>
 					</div>
-                    <!-- <br />
-                    <t t-foreach="pos_stock_movement.keys()" t-as="pos_terminal">
-                        <t t-if="pos_stock_movement.get(pos_terminal)">
-                            <div class="row">
-                                <div class="col-sm-12">
-                                    <center>
-                                        <h4>
-                                            <b>POS: <t t-esc="pos_terminal"/> - Stock Movement Report</b>
-                                        </h4>
-                                    </center>
-                                    <table class="table" align="center" width="100%"
-                                        style='border:1px solid black;border-collapse: collapse;'>
-                                        <tr style="border: 2px solid black !important;">
-                                            <th style="border: 2px solid black !important;">Name</th>
-                                            <th style="border: 2px solid black !important;">Quantity On Hand</th>
-                                            <th style="border: 2px solid black !important;">Forecasted</th>
-                                            <th style="border: 2px solid black !important;">Demand</th>
-                                            <th style="border: 2px solid black !important;">Reserved</th>
-                                        </tr>
-                                        <tr t-foreach="pos_stock_movement.get(pos_terminal)" t-as="vals" style="border:1px">
-                                            <td style='border:2px solid black'>
-                                                <t t-if="vals['name']">
-                                                    <t t-esc="vals['name']" /></t>
-                                            </td>
-                                            <td style='border:2px solid black'>
-                                                <t t-if="vals['qty_available']">
-                                                    <t t-esc="vals['qty_available']" /></t>
-                                            </td>
-                                            <td style='border:2px solid black'>
-                                                <t t-if="vals['incoming_qty']">
-                                                    <t t-esc="vals['incoming_qty']" /></t>
-                                            </td>
-                                            <td style='border:2px solid black'>
-                                                <t t-if="vals['outgoing_qty']">
-                                                    <t t-esc="vals['outgoing_qty']" /></t>
-                                            </td>
-                                            <td style='border:2px solid black'>
-                                                <t t-if="vals['reserved_qty']">
-                                                <t t-esc="vals['reserved_qty']" /></t>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            </div>
-                        </t>
-                    </t> -->
-					<!--<br /><t t-if="grand_journal_dict"><h4>Payment Methods Summary</h4><table class="table table-sm"><thead><tr><th>Name</th><th>Total</th></tr></thead><tbody><tr t-if="grand_journal_dict.get('Total',False)"><td><strong>Total</strong></td><td><span t-esc="'%.2f'%grand_journal_dict.get('Total',0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' /></td></tr><tr t-if="grand_journal_dict.get('Refund',False)"><td>Refund</td><td><span t-esc="'%.2f'%grand_journal_dict.get('Refund',0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' /></td></tr></tbody></table></t> -->
 					<br />
-					<h4>Products Sold</h4>
+
+					<t t-foreach="pos_stock_movement.keys()" t-as="branch">
+						<t t-if="list(pos_stock_movement.get(branch).values())">
+							<t t-if="pos_stock_movement.get(branch,[])">
+								<center>
+									<h5>
+										<div>Location: <t t-esc="branch"/> - Stock Movement Report</div>
+									</h5>
+								</center>
+								<table class="table table-sm">
+									<thead>
+										<tr >
+											<th >Name</th>
+											<th >Beginning</th>
+											<th >POS Movement</th>
+											<th >Other Movements</th>
+											<th >Ending</th>
+										</tr>
+									</thead>
+									<tbody>
+										<t t-foreach="pos_stock_movement.get(branch).keys()" t-as="key">
+											<t t-set="item" t-value="pos_stock_movement.get(branch).get(key,[])" />
+											<tr>
+												<td >
+													<t t-esc="item.get('name',0)" />
+												</td>
+												<td >
+													<t t-esc="'%.0f'%item.get('begin_qty',0)" />
+												</td>
+												<td >
+													<t t-esc="'%.0f'%item.get('qty_sold',0)"/>
+												</td>
+												<td >
+													<t t-esc="'%.0f'%item.get('other_movements',0)"/>
+												</td>
+												<td >
+													<t t-esc="'%.0f'%item.get('end_qty',0)"/>
+												</td>
+											</tr>
+										</t>
+									</tbody>
+								</table>
+							</t>
+						</t>
+					</t>
+					<br />
+					<h4>Full Product Movement</h4>
 					<table  class="table table-sm">
 						<thead>
 							<tr>
 								<th>Product</th>
 								<th>Quantity</th>
-								<th>Price Unit</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -227,13 +249,6 @@
                                     <t t-esc="line['quantity']" />
                                     <t t-if='line["uom"] != "Units"'>
                                         <t t-esc='line["uom"]' />
-                                    </t>
-                                </td>
-                                <td>
-                                    <t t-esc='line["price_unit"]' />
-                                    <t t-if='line["discount"] != 0'>
-                                        Disc: 
-                                        <t t-esc='line["discount"]' />%
                                     </t>
                                 </td>
 							</tr>
@@ -250,18 +265,18 @@
 		<field name="report_name">imerex_pos_payment_report.imerex_pos_payment_report_doc</field>
 		<field name="print_report_name">'Detailed Report'</field>
 	</record>
-            <record id="product_template_form_view_inheirt" model="ir.ui.view">
-            <field name="name">product.template.inherit</field>
-            <field name="model">product.template</field>
-            <field name="inherit_id" 
-                ref="product.product_template_form_view"/>
-            <field name="arch" type="xml">
-            <xpath expr="//page/group[@name='inventory']" position="after">
-                <group>
-                    <field name="reserved_qty"/>
-                    <field name="available_qty"/>
-                </group>
-            </xpath>
-            </field>
-        </record>
+	<record id="product_template_form_view_inheirt" model="ir.ui.view">
+		<field name="name">product.template.inherit</field>
+		<field name="model">product.template</field>
+		<field name="inherit_id" 
+			ref="product.product_template_form_view"/>
+		<field name="arch" type="xml">
+		<xpath expr="//page/group[@name='inventory']" position="after">
+			<group>
+				<field name="reserved_qty"/>
+				<field name="available_qty"/>
+			</group>
+		</xpath>
+		</field>
+	</record>
 </odoo>

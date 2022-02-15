@@ -66,7 +66,7 @@ odoo.define('era_tax_invoice.OrderReceipt', function(require) {
                     var seller_vat_no = "02"+ len_seller_vat + ascii_to_hexa(this.env.pos.company.vat);
 
                     var len_date = decimalToHex(order.creation_date.toISOString().length);
-                    console.log(order.creation_date.toISOString())
+                    // console.log(order.creation_date.toISOString())
 //                    console.log(order['formatted_validation_date'])
                     var dateTime = String(order.creation_date.toISOString())
 //                    dateTime = dateTime.replace("Z", " ")
@@ -82,8 +82,8 @@ odoo.define('era_tax_invoice.OrderReceipt', function(require) {
 
                     let qrCodeValueHex = seller_name+seller_vat_no+order_date+totalWithVatHex+totalVatHex
                     let qrCodeBase64 = hexToBase64(qrCodeValueHex)
-                    console.log(qrCodeBase64);
-                    console.log(qrCodeValueHex);
+                    // console.log(qrCodeBase64);
+                    // console.log(qrCodeValueHex);
 
                     var company_address =  this.env.pos.company.street;
                     if (this.env.pos.company.city){company_address += "-"+this.env.pos.company.city}

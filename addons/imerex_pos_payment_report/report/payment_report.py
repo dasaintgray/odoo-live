@@ -60,6 +60,7 @@ class PaymentReport(models.AbstractModel):
         total_payment_refund = 0.0
         picking_ids_dict = {}
         pos_terminal_dict = {}
+        item_sold = {}
         if data.get("config_ids", False):
             for pos_terminal in data.get("config_ids"):
                 session_ids = self.env['pos.session'].sudo().search(
@@ -67,15 +68,35 @@ class PaymentReport(models.AbstractModel):
                     )
                 session_dict = {}
                 session_journal_dict = {}
+
                 payment_refund = 0.0
                 pos_config = self.env['pos.config'].browse(pos_terminal)
+
+                """
+                POS Stock Movement Prerequisite
+                pos_product_sales = {}
+                item_sold.update(self.get_sale_details(data['date_start'], data['date_end'], pos_config.ids))
+                for product in item_sold['products']:
+                    pos_product_sales.update({
+                        product['product_id']: {
+                            'name': product['product_name'],
+                            'qty': product['quantity'],
+                            'uom': product['uom']
+                        }
+                    })
+                """
+
                 picking_ids_dict.update({
                     pos_config.name: {
-                        'warehouse': pos_config.picking_type_id.warehouse_id.id,
-                        'sessions': session_ids.picking_ids
+                        # 'warehouse': pos_config.picking_type_id.warehouse_id.id,
+                        'sessions': session_ids.picking_ids,
+                        # 'item_sold': pos_product_sales,
+                        # 'total_paid' : item_sold['total_paid']
                     }
                 })
                 for session_id in session_ids:
+                    cash_in_out_dict = {}
+                    invoice_pay_dict = {}
                     domain = [
                         ("payment_date", ">=", fields.Datetime.to_string(date_start)),
                         ("payment_date", "<=", fields.Datetime.to_string(date_stop)),
@@ -97,7 +118,6 @@ class PaymentReport(models.AbstractModel):
                     domain.append(
                         ("pos_order_id.session_id", "=", session_id.id))
                     pos_payments = pos_payment_env.sudo().search(domain)
-                    invoice_pay_dict = {}
                     if pos_payments and pos_payment_method_search:
                         for each_pos_payment_method in pos_payment_method_search:
                             # journal wise payment first we total all bank, cash etc etc.
@@ -274,11 +294,37 @@ class PaymentReport(models.AbstractModel):
                     search_session_id = self.env['pos.session'].sudo().search([
                         ('id', '=', session_id.id)
                     ], limit=1)
+                    messages = []
+                    for message_id in search_session_id.message_ids.ids:
+                        message = self.env['mail.message'].browse([message_id]).tracking_value_ids
+                        if message:
+                            amount = message.new_value_monetary - message.old_value_monetary
+                            reason = 'Opening Balance Changed by User'
+                            cash_in_out_dict.update({
+                                'Opening Balance': {
+                                    'payment_ref': reason,
+                                    'amount': amount
+                                }
+
+                            })
+
+                    for line_id in search_session_id.cash_register_id.line_ids:
+                        cash_in_out_dict.update({
+                            line_id.name: {
+                                'payment_ref': line_id.payment_ref,
+                                'amount': line_id.amount
+                            }
+                        })
                     if search_session_id:
                         session_dict.update({
                             search_session_id.name: {'pay': final_list,
                                             'grand_total': total_payment_amount,
-                                            'user': search_session_id.user_id.name
+                                            'user': search_session_id.user_id.name,
+                                            'cash_register': cash_in_out_dict,
+                                            'cash_start': search_session_id.cash_register_balance_start,
+                                            'cash_end': search_session_id.cash_register_balance_end,
+                                            'cash_end_real': search_session_id.cash_register_balance_end_real,
+                                            'state': search_session_id.state
                                             }
                         })
 
@@ -324,6 +370,117 @@ class PaymentReport(models.AbstractModel):
             total_payment_refund = total_payment_refund * -1
             grand_journal_dict.update({'Refund': total_payment_refund})
         
+        configs = self.env['pos.config'].browse(data['config_ids'])
+
+        #POS Stock Movement
+        # pos_stock_movement = {}
+        # for key,values in picking_ids_dict.items():
+        #     product_data = {}           
+        #     if values['sessions']:
+        #         stock_move = self.env['stock.move'].search([('picking_id', 'in', values['sessions'].ids)])
+        #         stock_move_line = self.env['stock.move.line'].search(
+        #             [('picking_id', 'in', values['sessions'].ids), ('move_id', 'in', stock_move.ids)])
+        #         initial_date = self.env['stock.move.line'].browse(min(stock_move_line.ids)).date
+        #         end_date = self.env['stock.move.line'].browse(max(stock_move_line.ids)).date
+        #         all_pos_products = self.env['product.product'].search([('available_in_pos','=',True),('is_combo','=',False)]).ids
+        #         for product in all_pos_products:
+        #             other_movements = 0
+        #             qty_sold = 0
+        #             product_details = self.env['product.product'].browse(product)
+        #             begin_qty = product_details.with_context({
+        #                         'to_date': initial_date + timedelta(seconds=-1),
+        #                         'warehouse': values['warehouse']}).qty_available
+        #             end_qty = product_details.with_context({
+        #                         'to_date': end_date + timedelta(seconds=1),
+        #                         'warehouse': values['warehouse']}).qty_available
+        #             if product in values['item_sold']:
+        #                 other_movements = begin_qty - end_qty - values['item_sold'][product]['qty']
+        #                 qty_sold = values['item_sold'][product]['qty']
+        #             product_data.update({
+        #                 product_details.id : {
+        #                     'name': product_details.display_name,
+        #                     'begin_qty': begin_qty,
+        #                     'qty_sold': qty_sold,
+        #                     'end_qty': end_qty,
+        #                     'other_movements': other_movements 
+        #                 }
+        #             })
+        #         pos_stock_movement.update({
+        #             key : product_data,
+        #         })
+
+        #Warehouse Stock Movement
+        pos_stock_movement = {}
+        #Get the warehouses of all the configs
+        warehouse = configs.picking_type_id.warehouse_id.ids
+        #Loop per warehouse to get the stockmovement
+        for wh in warehouse:
+            warehouse_product_sales = {}
+            product_data = {}
+            #Get specific posconfig for the warehouse specific value
+            posconfig = self.env['pos.config'].search([('picking_type_id.warehouse_id','=',wh)])
+
+            #Get warehouse data with the warehouse id wh
+            warehouse_id = self.env['stock.warehouse'].browse([wh])
+            warehouse_stock = self.get_sale_details(data['date_start'], data['date_end'], posconfig.ids)
+
+            #Serialize the products according to product ID
+            for product in warehouse_stock['products']:
+                warehouse_product_sales.update({
+                    product['product_id']: {
+                        'name': product['product_name'],
+                        'qty': product['quantity'],
+                        'uom': product['uom']
+                    }
+                })
+            #Get the stock movement on company level
+            stock_move = self.env['stock.move'].search([('picking_type_id','in',posconfig.picking_type_id.ids)])
+
+            #Get the Stock Movement on Location Level
+            stock_move_line = self.env['stock.move.line'].search(
+                [('picking_id', 'in', stock_move.picking_id.ids), ('move_id', 'in', stock_move.ids)])
+
+            #Get the initial and end date of the range of stock_move_line
+            initial_date = self.env['stock.move.line'].browse(min(stock_move_line.ids)).date
+            end_date = self.env['stock.move.line'].browse(max(stock_move_line.ids)).date
+
+            #Get all products that are available in the POS
+            all_pos_products = self.env['product.product'].search([('available_in_pos','=',True),('is_combo','=',False)]).ids
+ 
+            #Loop product quantity Movements
+            for product in all_pos_products:
+                other_movements = 0
+                qty_sold = 0
+                product_details = self.env['product.product'].browse(product)
+                #Get product beginning stock
+                begin_qty = product_details.with_context({
+                            'to_date': initial_date + timedelta(seconds=-1),
+                            'warehouse': wh}).qty_available
+
+                #Get product ending stock
+                end_qty = product_details.with_context({
+                            'to_date': end_date + timedelta(seconds=1),
+                            'warehouse': wh}).qty_available
+
+                #Compute product movements
+                if product in warehouse_product_sales:
+                    other_movements = begin_qty - end_qty - warehouse_product_sales[product]['qty']
+                    qty_sold = warehouse_product_sales[product]['qty']
+                
+                product_data.update({
+                    product_details.id : {
+                        'name': product_details.display_name,
+                        'begin_qty': begin_qty,
+                        'qty_sold': qty_sold,
+                        'end_qty': end_qty,
+                        'other_movements': other_movements 
+                    }
+                })
+            
+            pos_stock_movement.update({
+                warehouse_id.name : product_data
+                })
+
         data.update({
             'date_start': data['date_start'],
             'date_end': data['date_end'],
@@ -331,59 +488,10 @@ class PaymentReport(models.AbstractModel):
             'pos_terminal_dict': pos_terminal_dict,
             'currency': currency,
             'grand_journal_dict': grand_journal_dict,
-        })
-
-        configs = self.env['pos.config'].browse(data['config_ids'])
-
-        picking_ids_dict
-        pos_stock_movement = {}
-        for key,values in picking_ids_dict.items():
-            stock_movement = []
-            product_beginning_qty = {}
-            product_ending_qty={}
-            if values['sessions']:
-                stock_move = self.env['stock.move'].search([('picking_id', 'in', values['sessions'].ids)])
-                stock_move_line = self.env['stock.move.line'].search(
-                    [('picking_id', 'in', values['sessions'].ids), ('move_id', 'in', stock_move.ids)])
-                initial_date = self.env['stock.move.line'].browse(min(stock_move_line.ids)).date
-                end_date = self.env['stock.move.line'].browse(max(stock_move_line.ids)).date
-                all_pos_products = self.env['product.product'].search([('available_in_pos','=',True)]).ids
-                for product in all_pos_products:
-                    product_details = self.env['product.product'].browse(product)
-                    product_beginning_qty.update({
-                        product_details.id : {
-                            'name': product_details.name,
-                            'begin_qty': product_details.with_context({
-                                'to_date': initial_date + timedelta(seconds=-1),
-                                'warehouse': values['warehouse']}).qty_available
-                        }
-                    })
-                for product in all_pos_products:
-                    product_details = self.env['product.product'].browse(product)
-                    product_ending_qty.update({
-                        product_details.id : {
-                            'name': product_details.name,
-                            'end_qty': product_details.with_context({
-                                'to_date': end_date + timedelta(seconds=1),
-                                'warehouse': values['warehouse']}).qty_available
-                        }
-                    })
-
-                if stock_move_line:
-                    for record in stock_move_line:
-                        stock_movement.append({
-                            'name': record.product_id.name,
-                            'move_qty': round(record.product_id.qty_available - record.product_id.outgoing_qty, 2),
-                            'outgoing_qty': round(record.qty_done, 2),
-                            'qty_available': round(record.product_id.qty_available, 2),
-                            'reserved_qty': round(record.product_uom_qty, 2)})
-
-                pos_stock_movement.update({
-                    key : stock_movement
-                })       
-        data.update({
             'pos_stock_movement': pos_stock_movement
         })
+
+
         data.update(self.get_sale_details(data['date_start'], data['date_end'], configs.ids))
         return data
 
@@ -449,9 +557,10 @@ class PaymentReport(models.AbstractModel):
             currency = order.session_id.currency_id
 
             for line in order.lines:
-                key = (line.product_id, line.price_unit, line.discount)
-                products_sold.setdefault(key, 0.0)
-                products_sold[key] += line.qty
+                if not line.is_combo_line:
+                    key = (line.product_id)
+                    products_sold.setdefault(key, 0.0)
+                    products_sold[key] += line.qty
 
                 if line.tax_ids_after_fiscal_position:
                     line_taxes = line.tax_ids_after_fiscal_position.sudo().compute_all(line.price_unit * (1-(line.discount or 0.0)/100.0), currency, line.qty, product=line.product_id, partner=line.order_id.partner_id or False)
@@ -490,10 +599,8 @@ class PaymentReport(models.AbstractModel):
                 'product_name': product.name,
                 'code': product.default_code,
                 'quantity': qty,
-                'price_unit': price_unit,
-                'discount': discount,
                 'uom': product.uom_id.name
-            } for (product, price_unit, discount), qty in products_sold.items()], key=lambda l: l['product_name'])
+            } for product, qty in products_sold.items()], key=lambda l: l['product_name'])
         }
 class ProductProduct(models.Model):
     _inherit = "product.product"

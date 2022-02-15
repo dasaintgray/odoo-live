@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="product_combo_product_template_form_view" model="ir.ui.view">
+    <!-- <record id="product_combo_product_template_form_view" model="ir.ui.view">
         <field name="name">product.template.combo.common.form</field>
         <field name="model">product.template</field>
         <field name="inherit_id" ref="product.product_template_form_view"/>
@@ -93,5 +93,5 @@
                     widget="product_configurator"/>
             </xpath>
         </field>
-    </record>
+    </record> -->
 </odoo>

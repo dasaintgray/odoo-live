@@ -105,15 +105,18 @@ class ResPartner(models.Model):
                     raise ValidationError("Already Synced as a Shipper in CircuitTrack! you cannot edit address type")
             except KeyError:
                 pass
-
         #If no shipper_id, shipper contact will create a data in shipper service CircuitTrack
         if not self.shipper_id and self.type == 'shipper':
-            sync=self.cargo_create_shippers(self)
+            sync = self.env['cbiz.api.cargoapi'].cargo_create_shipper(self)
             if sync.text:
                 vals['shipper_id'] = sync.text
         #if shipper with shipper_id, will update data in shipper service CircuitTrack
         elif self.type == 'shipper':
-            sync = self.cargo_update_shippers(vals)
+            #check if created by odoo
+            shipper_check = self.env['cbiz.api.cargoapi'].cargo_get_shipper()
+            if not shipper_check['createdBy'] == 'Odoo':
+                if not shipper_check['updatedBy'] == 'Odoo':
+                    sync = self.env['cbiz.api.cargoapi'].cargo_update_shipper(vals)
 
         #reattach Odoo res_partner data and code
         partners = super(ResPartner, self).write(vals)
@@ -125,159 +128,4 @@ class ResPartner(models.Model):
         res = super(ResPartner, self).unlink()
         self.clear_caches()
         return res
-
-    def cargo_create_shippers(self,values):
-        apicargo = self.env['imerex_erp.jwt_auth'].api_headers()
-        #check if in posession of JWT token
-        if apicargo['token']:
-            #initialize constant values
-            api_body = {
-                "remarks": "Created by CBIZ",
-                "isactive": True,
-                "countryId":3,
-                "longitude": 0,
-                "latitude": 0,
-                "createdBy": "Odoo",
-                "auditUserId": 2,
-                "shipperaddress" : ""
-                }
-
-            #initialize fields for syncing
-            cargo_fields = self.cargo_fields()
-            cbiz_fields = self.cbiz_fields()
-
-            #append api_body values
-            for index in range(len(cargo_fields)):
-                if values[cbiz_fields[index]] and not values[cbiz_fields[index]] == values['image_1920']:
-                    api_body[cargo_fields[index]] = values[cbiz_fields[index]]
-                elif values[cbiz_fields[index]] and values[cbiz_fields[index]] == values['image_1920']:
-                    api_body["shipperphoto"] = 'data:image;base64,' + values['image_1920'].decode('utf-8')
-
-            #Initialize address_fields
-            address_fields = self.address_fields()
-
-            #concatenate address for export to CircuitTrack
-            for index in range(len(address_fields)):
-                if address_fields[index]:
-                    if not type(address_fields[index]) == 'dict':
-                        api_body['shipperaddress'] += address_fields[index] + ', '
-                    else:
-                        #for address field type with child models
-                        api_body['shipperaddress'] += address_fields[index].name + ', '
-
-            #remove excess space from shipperaddress if exist
-            if api_body['shipperaddress']:
-                api_body['shipperaddress'] = api_body['shipperaddress'][:-2]
-            
-            #Remove shipperaddress entry if no value
-            if not api_body['shipperaddress']:
-                api_body.pop('shipperaddress')
-            
-            #jsonify and send api_request
-            api_data = json.dumps(api_body)
-            api_request = requests.post(apicargo['shipper_url'], data=api_data, headers=apicargo['headers'])
-            api_response = self.api_validation(api_request)
-            return api_response
-
-    def cargo_update_shippers(self,values):
-        apicargo = self.env['imerex_erp.jwt_auth'].api_headers()
-        if apicargo['token']:
-            #initialize constant values
-            api_body = {
-                "shipperId": self.shipper_id,
-                "remarks": "Updated by CBIZ",
-                "isactive": True,
-                "countryId":3,
-                "longitude": 0,
-                "latitude": 0,
-                "updatedBy": "Odoo",
-                "auditUserId": 2,
-                "shipperaddress": ""
-                }
-            
-            #initialize fields for syncing
-            cargo_fields = self.cargo_fields()
-            cbiz_fields = self.cbiz_fields()
-            #append api_body values
-            for index in range(len(cargo_fields)):
-                if cbiz_fields[index] in values:
-                    if values[cbiz_fields[index]] and not cbiz_fields[index] == 'image_1920':
-                        api_body[cargo_fields[index]] = values[cbiz_fields[index]]
-                    elif values[cbiz_fields[index]] and cbiz_fields[index] == 'image_1920':
-                        api_body[cargo_fields[index]] = 'data:image;base64,' + values[cbiz_fields[index]]
-
-            #Initialize updated address_fields
-            address_fields = self.address_fields()
-            updated_address = []
-            #Get Updated Address Dict and Merge Updated Address Dict with Previous Address Dict
-            for index in range(len(address_fields)):
-                if address_fields[index] in values:
-                    if values[address_fields[index]]:
-                        updated_address.append(values[address_fields[index]])
-                else:
-                    updated_address.append(self[address_fields[index]])
-
-            #concatenate address for export to CircuitTrack
-            for index in range(len(updated_address)):
-                if updated_address[index]: 
-                    if type(updated_address[index]) is str:
-                        api_body['shipperaddress'] += updated_address[index] + ', '
-                    elif type(updated_address[index]) is int:
-                        if index == 4:
-                            address = self.env['res.country.state'].search([('id','=',updated_address[index])]).name
-                        if index == 5:
-                            address = self.env['res.country'].search([('id','=',updated_address[index])]).name
-                        api_body['shipperaddress'] += address + ', '
-                    else:
-                        #for address field type with child models
-                        api_body['shipperaddress'] += updated_address[index].name + ', '
-
-            #remove excess space from shipperaddress if exist
-            if api_body['shipperaddress']:
-                api_body['shipperaddress'] = api_body['shipperaddress'][:-2]
-            
-            #Remove shipperaddress entry if no value
-            if not api_body['shipperaddress']:
-                api_body.pop('shipperaddress')
-
-            #jsonify and send api_request
-            api_data = json.dumps(api_body)
-            api_request = requests.put(apicargo['shipper_url'], data=api_data, headers=apicargo['headers'])
-            api_response = self.api_validation(api_request)
-            return api_response
-
-    def api_validation(self,api_request):
-        if api_request.status_code == 413:
-            raise ValidationError("Attachment or Image File Size Exceeded Maximum!")
-        elif api_request.text == '':
-            raise ValidationError("Something Went Wrong with CircuitTrack")
-        elif not api_request.status_code == 200:
-            raise ValidationError("Syncing Issue! Please Try Again.")
-        elif api_request.text == 'Residence Number Exist':
-            raise ValidationError("Shipper Residence ID Exists in CircuitTrack Database! Do your job properly")
-        elif api_request.text == 'Shipper Mobile Exist':
-            raise ValidationError("Shipper Mobile Number Exists in CircuitTrack Database!")
-        else:
-            apicargo = apicargo = self.env['imerex_erp.jwt_auth'].api_headers()
-            requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])
-            return api_request
-
-    def cargo_fields(self):
-        cargo_fields = [
-            'shipperFirstName','shipperLastName','shipperExt','shipperPhoneNumber','shipperMobileNo',
-            'residenceIdNumber','emailaddress','shipperphoto'
-            ]
-        return cargo_fields
-
-    def cbiz_fields(self):
-        cbiz_fields = [
-            'first_name','last_name','name_ext','phone','mobile','vat','email','image_1920'
-            ]
-        return cbiz_fields
-
-    def address_fields(self):
-        address_fields = [
-            'street','street2','brgy','city','state_id','country_id','zip'
-        ]
-        return address_fields
     

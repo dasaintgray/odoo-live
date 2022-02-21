@@ -10,6 +10,8 @@
 				<field name="client_order_ref" position="after">
 					<field name="hashrow" attrs="{'invisible': True}"/>
 					<field name="shipper_id" attrs="{'invisible': False}"/>
+					<field name="payment_amount" attrs="{'invisible': False}"/>
+					<field name="payment_journal_id" attrs="{'invisible': False}"/>					
 				</field>			
 			</data>
 		</field>

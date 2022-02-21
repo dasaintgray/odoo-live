@@ -86,32 +86,6 @@ class Company(models.Model):
             self.state_id = state.id
             if state.country_id:
                 self.country_id = state.country_id.id
-class SaleOrder(models.Model):
-
-    _inherit = "sale.order"
-    hashrow = fields.Char("HashRow", size=64)
-    date_order = fields.Datetime(string='Order Date', required=True, readonly=False, index=True, copy=False, default=fields.Datetime.now, help="Creation date of draft/sent orders,\nConfirmation date of confirmed orders.")
-    shipper_id = fields.Char("Shipper ID", size=64)
-    _sql_constraints = [('name_unique', 'unique(name)','name must be unique!')]
-    
-    @api.onchange('shipper_id')
-    def onchange_shipper_id(self):
-        if self.shipper_id:
-            self.partner_id = self.env['res.partner'].search([("shipper_id","=",self.shipper_id)])
-
-    def _prepare_invoice(self):
-        invoice_vals = super(SaleOrder, self)._prepare_invoice()
-        if self.shipper_id:
-            self.partner_id = self.env['res.partner'].search([("shipper_id","=",self.shipper_id)])
-            invoice_vals['partner_id'] = self.partner_id.id
-            invoice_vals['partner_shipping_id'] = self.partner_id.id
-            invoice_vals['invoice_date'] = self.date_order
-        return invoice_vals
-    
-    def _prepare_confirmation_values(self):
-        return {
-            'state': 'sale',
-        }
     
 class Followers(models.Model):
     _inherit = 'mail.followers'

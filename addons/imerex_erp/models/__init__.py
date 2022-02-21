@@ -3,4 +3,5 @@
 from . import city
 from . import res_partner
 from . import hashrow
-from . import jwt_auth
+from . import cbiz_cargo
+from . import sale_order

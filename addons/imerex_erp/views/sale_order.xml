@@ -7,6 +7,8 @@
 		<field name="inherit_id" ref="sale.view_order_form"/>
 		<field name="arch" type="xml">
 			<data>
+				<field name="date_order" position="attributes">
+				</field> 
 				<field name="client_order_ref" position="after">
 					<field name="hashrow" attrs="{'invisible': True}"/>
 					<field name="shipper_id" attrs="{'invisible': False}"/>

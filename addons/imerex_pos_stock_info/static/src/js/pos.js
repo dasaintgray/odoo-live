@@ -12,11 +12,11 @@ odoo.define('imerex_pos_stock_info.pos', function (require) {
         model: 'product.product',
         fields: ['id', 'qty_available', 'virtual_available'],
         domain: [['available_in_pos', '=', true]],
-        // loaded: function (self, all_on_hand_qty) {
-        //     _.each(all_on_hand_qty, function (product) {
-        //         self.db.on_hand_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0]
-        //     })
-        // }
+        loaded: function (self, all_on_hand_qty) {
+            _.each(all_on_hand_qty, function (product) {
+                self.db.on_hand_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0]
+            })
+        }
     })
     DB.include({
         init: function (options) {

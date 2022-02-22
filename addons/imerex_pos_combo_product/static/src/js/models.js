@@ -25,8 +25,8 @@ odoo.define('imerex_pos_combo_product.models', function (require) {
             _.each(all_on_hand_qty, function (product) {
                 self.db.combo_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0]
             })
-        }
-    })
+        },
+    });
     DB.include({
         init: function (options) {
             this._super(options);

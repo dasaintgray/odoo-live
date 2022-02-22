@@ -7,7 +7,8 @@ from datetime import datetime
 import json
 import requests
 import sys
-
+import time
+from jose import jwt
 class cBizCargoJWT(models.Model):
     """
     Base Class for API Integration with CargoAPI
@@ -78,6 +79,24 @@ class cBizCargoJWT(models.Model):
             requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])
             return api_request
 
+    def jwt_test(self):
+        token = jwt.encode(
+            {
+                "aud": "auth_jwt_test_api",
+                "iss": "some issuer",
+                "exp": time.time() + 60,
+                "email": "admin@yourcompany.example.com",
+            },
+            key="thesecret",
+            algorithm=jwt.ALGORITHMS.HS256,
+        )
+        r = requests.get(
+            "http://10.69.69.108:8069/auth_jwt_demo/whoami",
+            headers={"Authorization": "Bearer " + token},
+        )
+        result=r.json()
+        result
+        
     def api_checking(self):
         api_headers = self.api_headers()
         api_response = requests.get('https://cargo-gw.circuitmindz.com/shippers-country/3',headers=api_headers['headers'])
@@ -158,12 +177,12 @@ class cBizCargoAPI(models.Model):
             api_response = self.env['cbiz.api'].api_validation(api_request)
             return api_response
 
-    def cargo_update_shipper(self,values):
+    def cargo_update_shipper(self,values,res_partner):
         apicargo = self.env['cbiz.api'].api_headers()
         if apicargo['token']:
             #initialize constant values
             api_body = {
-                "shipperId": self.shipper_id,
+                "shipperId": values['shipper_id'] if 'shipper_id' in values else res_partner.shipper_id,
                 "remarks": "Updated by CBIZ",
                 "isactive": True,
                 "countryId":3,
@@ -195,7 +214,7 @@ class cBizCargoAPI(models.Model):
                     if values[address_fields[index]]:
                         updated_address.append(values[address_fields[index]])
                 else:
-                    updated_address.append(self[address_fields[index]])
+                    updated_address.append(res_partner[address_fields[index]])
 
             #concatenate address for export to CircuitTrack
             for index in range(len(updated_address)):
@@ -291,6 +310,8 @@ class cBizCargoAPI(models.Model):
             'street','street2','brgy','city','state_id','country_id','zip'
         ]
         return address_fields
+
+
 
 
 

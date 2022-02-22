@@ -23,6 +23,7 @@ class SaleOrder(models.Model):
             invoice_vals['partner_id'] = so_partner.id
             invoice_vals['partner_shipping_id'] = so_partner.id
             invoice_vals['invoice_date'] = self.date_order
+            invoice_vals['ref'] = self.name
         return invoice_vals
     
     def _prepare_confirmation_values(self):

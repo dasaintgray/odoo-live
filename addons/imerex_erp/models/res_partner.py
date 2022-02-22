@@ -113,11 +113,11 @@ class ResPartner(models.Model):
         #if shipper with shipper_id, will update data in shipper service CircuitTrack
         elif self.type == 'shipper':
             #check if created by odoo
-            shipper_check = self.env['cbiz.api.cargoapi'].cargo_get_shipper()
-            if not shipper_check['createdBy'] == 'Odoo':
-                if not shipper_check['updatedBy'] == 'Odoo':
-                    sync = self.env['cbiz.api.cargoapi'].cargo_update_shipper(vals)
-
+            # shipper_check = self.env['cbiz.api.cargoapi'].cargo_get_shipper(vals['shipper_id'] if 'shipper_id' in vals else self.shipper_id)
+            sync = self.env['cbiz.api.cargoapi'].cargo_update_shipper(vals,self)
+            # if not shipper_check['updatedBy'] == 'Odoo':
+            #     if not shipper_check['createdBy'] == 'Odoo':
+            #         sync = self.env['cbiz.api.cargoapi'].cargo_update_shipper(vals,self)
         #reattach Odoo res_partner data and code
         partners = super(ResPartner, self).write(vals)
         return partners

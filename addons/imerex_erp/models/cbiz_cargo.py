@@ -73,7 +73,7 @@ class cBizCargoJWT(models.Model):
         elif api_request.text == 'Shipper Mobile Exist':
             raise ValidationError("Shipper Mobile Number Exists in CircuitTrack Database!")
         else:
-            apicargo = apicargo = self.env['cbiz.api'].api_headers()
+            apicargo = self.env['cbiz.api'].api_headers()
             requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])
             return api_request
         
@@ -86,8 +86,8 @@ class cBizCargoJWT(models.Model):
         api_elapse_time = api_response.elapsed.total_seconds()
         api_elapse_time_cargo = api_response_cargo.elapsed.total_seconds()
         api_bytes_cargo = api_response_cargo.content
-        api_bytes = api_response.content 
-        api_length_cargo = len(api_data_cargo['data']) 
+        api_bytes = api_response.content
+        api_length_cargo = len(api_data_cargo['data'])
         api_length = len(api_data)
         api_first_load_cargo= api_data_cargo['data'][0]
         api_first_load = api_data[0]

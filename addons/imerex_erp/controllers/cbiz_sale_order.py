@@ -86,8 +86,8 @@ class cBizSaleOrderService(Component):
     def _validator_create(self):
         schema = {
             "code": {"type": "string"},
-            "product_uom_qty": {"type": "integer"},
-            "price_unit": {"type": "integer"}
+            "product_uom_qty": {"type": "float"},
+            "price_unit": {"type": "float"}
         }
         res = {
             "name":{
@@ -99,8 +99,8 @@ class cBizSaleOrderService(Component):
             "partner_id":{"type": "integer"},
             "company_id": {"type": "integer"},
             "cargo_branch_id":{"type": "integer"},
-            "payment_journal_id":{"type": "integer"},
-            "payment_amount":{"type": "integer"},
+            "payment_journal_id":{"type": "float"},
+            "payment_amount":{"type": "float"},
             "client_order_ref": {"type": "string"},
             "order_line": {
                 "type": "list",

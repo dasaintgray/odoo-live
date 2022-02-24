@@ -2,15 +2,14 @@
 <odoo>
     <!-- Add hash to Product Template form -->   
 	<record id="product_template_form_view_hash" model="ir.ui.view">
-		<field name="name">product.template.form.hash</field>
+		<field name="name">product.template.form.inherit</field>
 		<field name="model">product.template</field>
 		<field name="inherit_id" ref="product.product_template_form_view"/>
 		<field name="arch" type="xml">
-			<data>
-				<field name="description" position="after">
-					<field name="hashrow" attrs="{'invisible': True}"/>
-				</field>			
-			</data>
+            <xpath expr="//group[@name='group_general']" position="inside">
+				<field name="hashrow" attrs="{'invisible': True}"/>
+				<field name="code" attrs="{'invisible': True}"/>
+			</xpath>			
 		</field>
 	</record>
     <!-- Remove update_quantity button from header of stock product template form -->

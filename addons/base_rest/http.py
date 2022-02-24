@@ -69,6 +69,8 @@ def wrapJsonException(exception, include_description=False, extra_info=None):
     def get_body(environ=None):
         res = {"code": exception.code, "name": escape(exception.name)}
         description = exception.get_description(environ)
+        description = description.replace('<p>','')
+        description = description.replace('</p>','')
         if config.get_misc("base_rest", "dev_mode"):
             # return exception info only if base_rest is in dev_mode
             res.update({"traceback": exception.traceback, "description": description})

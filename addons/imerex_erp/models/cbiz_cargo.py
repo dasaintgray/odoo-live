@@ -30,28 +30,26 @@ class cBizCargoJWT(models.Model):
         jwt_data = json.dumps(jwt_body_auth)
         jwt_request = requests.post(jwt_url, data=jwt_data, headers=api_headers)
         jwt_response = jwt_request.json()
-        test = self.env['cbiz.api'].search([]).id
-        if self.env['cbiz.api'].search([]).access_token:
+        jwt_id = self.search([]).id
+        if self.search([]).access_token:
             self.env.cr.execute(_("""
-                UPDATE cbiz_api set "access_token"='%s',"expiration_Time"='%s' WHERE id='%s';
-            """,jwt_response['access_token'],jwt_response['expiration_Time'],test))
-        else:
-            self.env.cr.execute(_("""
-                INSERT INTO cbiz_api("access_token","expiration_Time") VALUES('%s','%s');
-            """,jwt_response['access_token'],jwt_response['expiration_Time']))
-        token = self.env['cbiz.api'].search([])
+                DELETE FROM cbiz_api WHERE id=%s;
+            """,jwt_id))
+        self.env.cr.execute(_("""
+            INSERT INTO cbiz_api("access_token","expiration_Time") VALUES('%s','%s');
+        """,jwt_response['access_token'],jwt_response['expiration_Time']))
+        token = self.search([])
         return token
     
     def api_headers(self):
         domain = 'https://dev-gw.circuitmindz.com'
-
         #check expiration
-        expiration = self.env['cbiz.api'].search([]).expiration_Time
+        expiration = self.search([]).expiration_Time
         timenow = datetime.now().timestamp()
         if expiration < int(timenow):
             token = self.jwt_authenticate()
         else:
-            token = self.env['cbiz.api'].search([])
+            token = self.search([])
         api_cargo = {
             'shipper_url' : domain + '/shippers/',
             'shipper_refresh_url' : domain + '/shippers-refresh/',
@@ -78,24 +76,6 @@ class cBizCargoJWT(models.Model):
             apicargo = apicargo = self.env['cbiz.api'].api_headers()
             requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])
             return api_request
-
-    def jwt_test(self):
-        token = jwt.encode(
-            {
-                "aud": "auth_jwt_test_api",
-                "iss": "some issuer",
-                "exp": time.time() + 60,
-                "email": "admin@yourcompany.example.com",
-            },
-            key="thesecret",
-            algorithm=jwt.ALGORITHMS.HS256,
-        )
-        r = requests.get(
-            "http://10.69.69.108:8069/auth_jwt_demo/whoami",
-            headers={"Authorization": "Bearer " + token},
-        )
-        result=r.json()
-        result
         
     def api_checking(self):
         api_headers = self.api_headers()

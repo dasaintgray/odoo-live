@@ -5,3 +5,4 @@ from . import res_partner
 from . import hashrow
 from . import cbiz_cargo
 from . import sale_order
+from . import product_template

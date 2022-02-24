@@ -1,6 +1,86 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates id="template" xml:space="preserve">
-
-
-
+    <t t-name="OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension" owl="1">
+         <!--Override-->
+            <xpath expr="//t[@t-esc='receipt.company.name']" position="replace" >
+                <t t-if="receipt.branch.receipt_name">
+                    <div><t t-esc="receipt.branch.receipt_name"/></div>
+                </t>
+                <t t-else="">
+                    <div><t t-esc="receipt.company.name"/></div>
+                </t>
+                <t t-if="receipt.branch.receipt_branchname">
+                    <div><t t-esc="branch.receipt_branchname"/></div>
+                </t>
+            </xpath>
+            <xpath expr="//div[hasclass('pos-receipt-contact')]" position="replace" >
+                <div class="pos-receipt-contact">
+                        <t t-if="receipt.branch.receipt_name">
+                            <div><t t-esc="receipt.branch.receipt_name"/></div>
+                        </t>
+                        <t t-else="">
+                            <t t-if="receipt.company.contact_address">
+                                <div><t t-esc="receipt.company.contact_address" /></div>
+                            </t>
+                        </t>
+                        <t t-if="receipt.branch.receipt_branchname">
+                            <div><t t-esc="receipt.branch.receipt_branchname"/></div>
+                        </t>
+                        <t t-if="receipt.branch_address">
+                            <div><t t-esc="receipt.branch_address"/></div>
+                        </t>
+                        <t t-else="">
+                            <div><t t-esc="receipt.company_address"/></div>
+                        </t>
+                        <t t-if="receipt.branch_state">
+                            <div><t t-esc="receipt.branch_state"/></div>
+                            <div>----------------------------------</div>
+                        </t>
+                        <t t-else="">
+                            <div><t t-esc="receipt.company_state"/></div>
+                            <div>----------------------------------</div>
+                        </t>
+                        <t t-if="receipt.branch.ksa_address">
+                            <div><t t-esc="receipt.branch.ksa_address"/></div>
+                            <div>----------------------------------</div>
+                        </t>
+                        <t t-if="receipt.branch.phone">
+                            <div>Tel: <t t-esc="receipt.branch.phone" /></div>
+                        </t>
+                        <t t-else="">
+                            <div><t t-esc="receipt.company.phone"/></div>
+                        </t>
+                        <t t-if="receipt.branch.email">
+                            <div>Email: <t t-esc="receipt.branch.email" /></div>
+                        </t>
+                        <t t-else="">
+                            <div>Email: <t t-esc="receipt.company.email"/></div>
+                        </t>
+                        <t t-if="receipt.branch.website">
+                            <div>Website: <t t-esc="receipt.branch.website" /></div>
+                        </t>
+                        <t t-else="">
+                            <div>Website: <t t-esc="receipt.company.website"/></div>
+                        </t>
+                        <t t-if="receipt.branch.facebook">
+                            <div>Facebook: <t t-esc="receipt.branch.facebook" /></div>
+                        </t>
+                        <t t-if="receipt.branch.twitter">
+                            <div>Twitter: <t t-esc="receipt.branch.twitter" /></div>
+                        </t>
+                        <t t-if="receipt.header_html">
+                            <t t-raw="receipt.header_html" />
+                        </t>
+                        <t t-if="!receipt.header_html and receipt.header">
+                            <div style="white-space:pre-line"><t t-esc="receipt.header" /></div>
+                        </t>
+                        <t t-if="receipt.cashier">
+                            <div class="cashier">
+                                <div>--------------------------------</div>
+                                <div>Served by <t t-esc="receipt.cashier" /></div>
+                            </div>
+                        </t>
+                    </div>
+            </xpath>
+    </t>
 </templates>

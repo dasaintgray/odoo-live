@@ -121,7 +121,7 @@ class RestController(Controller, metaclass=RestControllerType):
     # The default authentication to apply to all pre defined routes.
     _default_auth = "user"
     # The default Access-Control-Allow-Origin cors directive value.
-    _default_cors = None
+    _default_cors = False
     # Whether CSRF protection should be enabled for the route.
     _default_csrf = False
     # Whether session should be saved into the session store

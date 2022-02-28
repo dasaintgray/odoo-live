@@ -18,7 +18,7 @@ class cBizCargoJWT(models.Model):
     expiration_Time = fields.Integer()
     
     def jwt_authenticate(self):
-        jwt_url_base = "https://dev-jwt.circuitmindz.com"
+        jwt_url_base = "https://cargo-jwt.circuitmindz.com"
         jwt_url = jwt_url_base + "/api/login"
         jwt_body_auth = {
             "Username":"acctapp",

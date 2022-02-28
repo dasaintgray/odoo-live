@@ -45,6 +45,7 @@
         'views/branch_pos.xml',
         'views/branch_pos_config.xml',
         'views/branch_pos_order.xml',
+        'views/branch_pos_payment_method.xml',
         'views/branch_pos_session.xml',
         'views/branch_purchase_order_views.xml',
         'views/branch_res_users_views.xml',

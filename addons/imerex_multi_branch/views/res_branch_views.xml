@@ -35,6 +35,8 @@
                                 <group>
                                     <field name="company_id" options='{"no_create": True}'/>
                                     <field name="phone" class="o_force_ltr"/>
+                                    <field name="mobile" class="o_force_ltr"/>
+                                    <field name="whatsapp"/>
                                     <field name="email"/>
                                     <field name="twitter"/>
                                     <field name="facebook"/>

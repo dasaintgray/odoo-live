@@ -21,11 +21,13 @@ class Branch(models.Model):
         string="Fed. State", domain="[('country_id', '=?', country_id)]"
     )
     country_id = fields.Many2one('res.country',  string="Country")
-    email = fields.Char(store=True, )
+    email = fields.Char(store=True)
     phone = fields.Char(store=True)
     website = fields.Char(readonly=False)
     twitter = fields.Char()
     facebook = fields.Char()
+    mobile = fields.Char()
+    whatsapp = fields.Char("WhatsApp")
 
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'The Branch name must be unique !')

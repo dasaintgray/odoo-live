@@ -29,6 +29,7 @@ class cBizCargoJWT(models.Model):
             }
         jwt_data = json.dumps(jwt_body_auth)
         jwt_request = requests.post(jwt_url, data=jwt_data, headers=api_headers)
+        self.env['cbiz.api'].api_validation(jwt_request)
         jwt_response = jwt_request.json()
         jwt_id = self.search([]).id
         if self.search([]).access_token:
@@ -62,11 +63,13 @@ class cBizCargoJWT(models.Model):
         return api_cargo
 
     def api_validation(self,api_request):
-        if api_request.status_code == 413:
-            raise ValidationError("Attachment or Image File Size Exceeded Maximum!")
-        elif api_request.text == '':
+        if api_request.text == '':
             raise ValidationError("Something Went Wrong with CircuitTrack")
         elif not api_request.status_code == 200:
+            if api_request.status_code == 413:
+                raise ValidationError("Attachment or Image File Size Exceeded Maximum!")
+            if api_request.text == 'API Authentication Failed!':
+                raise ValidationError("CircuitTrack API Authentication Failed!")
             raise ValidationError("Syncing Issue! Please Try Again.")
         elif api_request.text == 'Residence Number Exist':
             raise ValidationError("Shipper Residence ID Exists in CircuitTrack Database! Do your job properly")

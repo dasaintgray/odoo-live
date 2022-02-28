@@ -26,6 +26,7 @@ class Branch(models.Model):
     website = fields.Char(readonly=False)
     twitter = fields.Char()
     facebook = fields.Char()
+    instagram = fields.Char()
     mobile = fields.Char()
     whatsapp = fields.Char("WhatsApp")
 

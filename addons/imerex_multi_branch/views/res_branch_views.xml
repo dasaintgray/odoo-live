@@ -40,6 +40,7 @@
                                     <field name="email"/>
                                     <field name="twitter"/>
                                     <field name="facebook"/>
+                                    <field name="instagram"/>
                                     <field name="website" string="Website" widget="url" placeholder="e.g. https://www.imerex.com.ph"/>
                                 </group>
                             </group>

@@ -24,16 +24,16 @@ class ResPartner(models.Model):
             default='contact',
             help="Used to select automatically the right address according to the context in sales and purchases documents.")
 
-    @api.constrains('vat')
-    def _check_vat(self):
-        #Validate Mobile to Be 9 digit or More
-        try:
-            if int(self.vat) < 999999999 and int(self.vat) > 1000000000000:
-                raise ValidationError("That is not a valid IQAMA ID, IQAMA ID ranges from 10 digits to 12 digits.")
-            else:
-                pass
-        except ValueError:
-            raise ValidationError("That is not a valid IQAMA ID!!!!")          
+    # @api.constrains('vat')
+    # def _check_vat(self):
+    #     #Validate Mobile to Be 9 digit or More
+    #     try:
+    #         if int(self.vat) < 999999999 and int(self.vat) > 1000000000000:
+    #             raise ValidationError("That is not a valid IQAMA ID, IQAMA ID ranges from 10 digits to 12 digits.")
+    #         else:
+    #             pass
+    #     except ValueError:
+    #         raise ValidationError("That is not a valid IQAMA ID!!!!")          
 
     @api.constrains('mobile')
     def _check_mobile(self):

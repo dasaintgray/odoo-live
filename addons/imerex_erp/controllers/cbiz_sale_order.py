@@ -118,6 +118,9 @@ class cBizSaleOrderService(Component):
             "name": {
                 "type": "string",
             },
+            "invoice_id": {
+        
+            },
             "error": {}
         }
         return res
@@ -147,6 +150,7 @@ class cBizSaleOrderService(Component):
     def _return_create_values(self,created_order):
         return_sale_order = {
             "id": created_order.id,
-            "name": created_order.name
+            "name": created_order.name,
+            "invoice_id": created_order.invoice_ids.id
         }
         return return_sale_order

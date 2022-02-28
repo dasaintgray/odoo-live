@@ -29,7 +29,8 @@ class cBizCargoJWT(models.Model):
             }
         jwt_data = json.dumps(jwt_body_auth)
         jwt_request = requests.post(jwt_url, data=jwt_data, headers=api_headers)
-        self.env['cbiz.api'].api_validation(jwt_request)
+        if jwt_request.text == 'API Authentication Failed!':
+            raise ValidationError("CircuitTrack API Authentication Failed!")
         jwt_response = jwt_request.json()
         jwt_id = self.search([]).id
         if self.search([]).access_token:

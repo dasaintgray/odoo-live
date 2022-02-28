@@ -12,6 +12,8 @@ class PosConfig(models.Model):
 
     branch_id = fields.Many2one("res.branch", string='Branch', store=True,
                                 readonly=False, domain=_get_branch_id)
+
+    
     # picking_type_id = fields.Many2one(domain=_picking_type_check)
     _sql_constraints = [('pos_name_unique', 'unique(name)','POS Name must be unique!')]
     @api.constrains('picking_type_id')

@@ -5,6 +5,9 @@
         <field name='model'>pos.config</field>
         <field name='inherit_id' ref='point_of_sale.pos_config_view_form' />
         <field type='xml' name='arch'>
+            <xpath expr="//field[@name='payment_method_ids" position="replace">
+            
+            </xpath>
             <xpath expr="//div[3]" position="inside">
                 <div class="col-12 col-lg-6 o_setting_box" title="Company Branch">
                     <div class="o_setting_right_pane" id="branch_id">

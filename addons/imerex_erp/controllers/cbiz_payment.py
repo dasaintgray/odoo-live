@@ -52,7 +52,7 @@ class cBizPaymentService(Component):
             },
             "company_id":{"type": "integer"},
             "payment_journal_id":{"type": "integer"},
-            "amount":{"type": "integer"}
+            "amount":{"type": "float"}
         }
         return res
 

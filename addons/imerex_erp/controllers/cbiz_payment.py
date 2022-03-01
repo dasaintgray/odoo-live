@@ -51,7 +51,7 @@ class cBizPaymentService(Component):
                 "required": True
             },
             "company_id":{"type": "integer"},
-            "payment_journal_id":{"type": "integer"},
+            "payment_journal_id":{"type": "float"},
             "amount":{"type": "float"}
         }
         return res

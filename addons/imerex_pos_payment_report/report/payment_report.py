@@ -47,10 +47,10 @@ class PaymentReport(models.AbstractModel):
         column_pos_payment_value_list = []
         
         for pos_payment_method in pos_payment_method_search:
-            if pos_payment_method.name not in column_name_list:
-                column_name_list.append(pos_payment_method.name)
-            if pos_payment_method.name not in column_pos_payment_value_list:
-                column_pos_payment_value_list.append(pos_payment_method.name)
+            if pos_payment_method.pos_name not in column_name_list:
+                column_name_list.append(pos_payment_method.pos_name)
+            if pos_payment_method.pos_name not in column_pos_payment_value_list:
+                column_pos_payment_value_list.append(pos_payment_method.pos_name)
 
         column_name_list.append("Total")
         column_pos_payment_value_list.append("Total")
@@ -417,6 +417,7 @@ class PaymentReport(models.AbstractModel):
         for wh in warehouse:
             warehouse_product_sales = {}
             product_data = {}
+            all_pos_products = {}
             #Get specific posconfig for the warehouse specific value
             posconfig = self.env['pos.config'].search([('picking_type_id.warehouse_id','=',wh)])
 
@@ -441,45 +442,47 @@ class PaymentReport(models.AbstractModel):
                 [('picking_id', 'in', stock_move.picking_id.ids), ('move_id', 'in', stock_move.ids)])
 
             #Get the initial and end date of the range of stock_move_line
-            initial_date = self.env['stock.move.line'].browse(min(stock_move_line.ids)).date
-            end_date = self.env['stock.move.line'].browse(max(stock_move_line.ids)).date
+            if stock_move_line.ids:
+                initial_date = self.env['stock.move.line'].browse(min(stock_move_line.ids)).date
+                end_date = self.env['stock.move.line'].browse(max(stock_move_line.ids)).date
 
-            #Get all products that are available in the POS
-            all_pos_products = self.env['product.product'].search([('available_in_pos','=',True),('is_combo','=',False)]).ids
- 
+                #Get all products that are available in the POS
+                all_pos_products = self.env['product.product'].search([('available_in_pos','=',True),('is_combo','=',False)]).ids
+
             #Loop product quantity Movements
-            for product in all_pos_products:
-                other_movements = 0
-                qty_sold = 0
-                product_details = self.env['product.product'].browse(product)
-                #Get product beginning stock
-                begin_qty = product_details.with_context({
-                            'to_date': initial_date + timedelta(seconds=-1),
-                            'warehouse': wh}).qty_available
+            if all_pos_products:
+                for product in all_pos_products:
+                    other_movements = 0
+                    qty_sold = 0
+                    product_details = self.env['product.product'].browse(product)
+                    #Get product beginning stock
+                    begin_qty = product_details.with_context({
+                                'to_date': initial_date + timedelta(seconds=-1),
+                                'warehouse': wh}).qty_available
 
-                #Get product ending stock
-                end_qty = product_details.with_context({
-                            'to_date': end_date + timedelta(seconds=1),
-                            'warehouse': wh}).qty_available
+                    #Get product ending stock
+                    end_qty = product_details.with_context({
+                                'to_date': end_date + timedelta(seconds=1),
+                                'warehouse': wh}).qty_available
 
-                #Compute product movements
-                if product in warehouse_product_sales:
-                    other_movements = begin_qty - end_qty - warehouse_product_sales[product]['qty']
-                    qty_sold = warehouse_product_sales[product]['qty']
+                    #Compute product movements
+                    if product in warehouse_product_sales:
+                        other_movements = begin_qty - end_qty - warehouse_product_sales[product]['qty']
+                        qty_sold = warehouse_product_sales[product]['qty']
+                    
+                    product_data.update({
+                        product_details.id : {
+                            'name': product_details.display_name,
+                            'begin_qty': begin_qty,
+                            'qty_sold': qty_sold,
+                            'end_qty': end_qty,
+                            'other_movements': other_movements 
+                        }
+                    })
                 
-                product_data.update({
-                    product_details.id : {
-                        'name': product_details.display_name,
-                        'begin_qty': begin_qty,
-                        'qty_sold': qty_sold,
-                        'end_qty': end_qty,
-                        'other_movements': other_movements 
-                    }
-                })
-            
-            pos_stock_movement.update({
-                warehouse_id.name : product_data
-                })
+                pos_stock_movement.update({
+                    warehouse_id.name : product_data
+                    })
 
         data.update({
             'date_start': data['date_start'],

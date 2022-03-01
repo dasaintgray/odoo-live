@@ -39,11 +39,11 @@ class SaleOrder(models.Model):
                     # picking.button_validate()
 
             if self.payment_journal_id and not order.invoice_ids:
-                order._create_invoices()  
-
-            if self.payment_journal_id and order.invoice_ids and self.payment_amount:
+                order._create_invoices()
                 for invoice in order.invoice_ids:
                     invoice.action_post()
+
+            if self.payment_journal_id and order.invoice_ids and self.payment_amount:
                 payment = invoice.env['account.payment.register'].with_context({
                     "active_model":"account.move",
                     "active_ids":invoice.id

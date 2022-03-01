@@ -6,7 +6,7 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
     date_order = fields.Datetime(string='Order Date', required=True, readonly=False, index=True, copy=False, default=fields.Datetime.now, help="Creation date of draft/sent orders,\nConfirmation date of confirmed orders.")
     shipper_id = fields.Char("Shipper ID", size=64)
-    payment_amount = fields.Integer("Payment")
+    payment_amount = fields.Float("Payment")
     payment_journal_id = fields.Many2one("account.journal")
     _sql_constraints = [('name_unique', 'unique(name)','name must be unique!')]
 

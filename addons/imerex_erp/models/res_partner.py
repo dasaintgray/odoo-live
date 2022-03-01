@@ -35,22 +35,22 @@ class ResPartner(models.Model):
     #     except ValueError:
     #         raise ValidationError("That is not a valid IQAMA ID!!!!")          
 
-    @api.constrains('mobile')
-    def _check_mobile(self):
-        #Validate Mobile to Be 9 digit or More
-        try:
-            if int(self.mobile):
-                if len(self.mobile) < 9 or len(self.mobile) > 12:
-                    raise ValidationError("That is not a valid Mobile Number")
-        except ValueError:
-            raise ValidationError("That is not a valid Mobile Number, Remove any special characters.")   
+    # @api.constrains('mobile')
+    # def _check_mobile(self):
+    #     #Validate Mobile to Be 9 digit or More
+    #     try:
+    #         if int(self.mobile):
+    #             if len(self.mobile) < 9 or len(self.mobile) > 12:
+    #                 raise ValidationError("That is not a valid Mobile Number")
+    #     except ValueError:
+    #         raise ValidationError("That is not a valid Mobile Number, Remove any special characters.")   
 
-    @api.constrains('name_ext')
-    def _check_name_ext(self):
-        #Validate Max Char of Name Extension/Suffix
-        if self.name_ext:
-            if len(self.name_ext) > 4:
-                raise ValidationError("Masyadong Mahaba Error! Max 4")
+    # @api.constrains('name_ext')
+    # def _check_name_ext(self):
+    #     #Validate Max Char of Name Extension/Suffix
+    #     if self.name_ext:
+    #         if len(self.name_ext) > 4:
+    #             raise ValidationError("Masyadong Mahaba Error! Max 4")
 
     @api.onchange("first_name", "last_name", "name_ext")
     def onchange_name(self):

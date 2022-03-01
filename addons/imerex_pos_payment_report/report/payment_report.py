@@ -47,10 +47,10 @@ class PaymentReport(models.AbstractModel):
         column_pos_payment_value_list = []
         
         for pos_payment_method in pos_payment_method_search:
-            if pos_payment_method.name not in column_name_list:
-                column_name_list.append(pos_payment_method.name)
-            if pos_payment_method.name not in column_pos_payment_value_list:
-                column_pos_payment_value_list.append(pos_payment_method.name)
+            if pos_payment_method.pos_name not in column_name_list:
+                column_name_list.append(pos_payment_method.pos_name)
+            if pos_payment_method.pos_name not in column_pos_payment_value_list:
+                column_pos_payment_value_list.append(pos_payment_method.pos_name)
 
         column_name_list.append("Total")
         column_pos_payment_value_list.append("Total")
@@ -132,22 +132,22 @@ class PaymentReport(models.AbstractModel):
                                                     pay_dict = invoice_pay_dict.get(
                                                         invoice.name)
                                                     total = pay_dict.get("Total")
-                                                    if pay_dict.get(each_pos_payment_method.name, False):
+                                                    if pay_dict.get(each_pos_payment_method.pos_name, False):
                                                         amount = pay_dict.get(
-                                                            each_pos_payment_method.name)
+                                                            each_pos_payment_method.pos_name)
                                                         total += each_pos_payment.amount
                                                         amount += each_pos_payment.amount
                                                         pay_dict.update(
-                                                            {each_pos_payment_method.name: amount, "Total": total})
+                                                            {each_pos_payment_method.pos_name: amount, "Total": total})
                                                     else:
                                                         total += each_pos_payment.amount
                                                         pay_dict.update(
-                                                            {each_pos_payment_method.name: each_pos_payment.amount, "Total": total})
+                                                            {each_pos_payment_method.pos_name: each_pos_payment.amount, "Total": total})
         
                                                     invoice_pay_dict.update(
                                                         {invoice.name: pay_dict})
                                                 else:
-                                                    invoice_pay_dict.update({invoice.name: {each_pos_payment_method.name: each_pos_payment.amount, "Total": each_pos_payment.amount, "Invoice": invoice.name,
+                                                    invoice_pay_dict.update({invoice.name: {each_pos_payment_method.pos_name: each_pos_payment.amount, "Total": each_pos_payment.amount, "Invoice": invoice.name,
                                                                                         "Customer": invoice.partner_id.name, "Invoice Date": invoice.invoice_date, "User": invoice.user_id.name if invoice.user_id else "", "style": 'border: 1px solid black;'}})
                                             if invoice.move_type == "out_refund":
                                                 payment_refund += each_pos_payment.amount
@@ -155,23 +155,23 @@ class PaymentReport(models.AbstractModel):
                                                     pay_dict = invoice_pay_dict.get(
                                                         invoice.name)
                                                     total = pay_dict.get("Total")
-                                                    if pay_dict.get(each_pos_payment_method.name, False):
+                                                    if pay_dict.get(each_pos_payment_method.pos_name, False):
                                                         amount = pay_dict.get(
-                                                            each_pos_payment_method.name)
+                                                            each_pos_payment_method.pos_name)
                                                         total -= each_pos_payment.amount
                                                         amount -= each_pos_payment.amount
                                                         pay_dict.update(
-                                                            {each_pos_payment_method.name: amount, "Total": total})
+                                                            {each_pos_payment_method.pos_name: amount, "Total": total})
                                                     else:
                                                         total -= each_pos_payment.amount
                                                         pay_dict.update(
-                                                            {each_pos_payment_method.name: -1 * (each_pos_payment.amount), "Total": total})
+                                                            {each_pos_payment_method.pos_name: -1 * (each_pos_payment.amount), "Total": total})
         
                                                     invoice_pay_dict.update(
                                                         {invoice.name: pay_dict})
         
                                                 else:
-                                                    invoice_pay_dict.update({invoice.name: {each_pos_payment_method.name: -1 * (each_pos_payment.amount), "Total": -1 * (each_pos_payment.amount), "Invoice": invoice.name,
+                                                    invoice_pay_dict.update({invoice.name: {each_pos_payment_method.pos_name: -1 * (each_pos_payment.amount), "Total": -1 * (each_pos_payment.amount), "Invoice": invoice.name,
                                                                                         "Customer": invoice.partner_id.name, "Invoice Date": invoice.invoice_date, "User": invoice.user_id.name if invoice.user_id else "", "style": 'border: 1px solid black;color:red'}})
                                     else:
                                         if not currency:
@@ -180,22 +180,22 @@ class PaymentReport(models.AbstractModel):
                                             pay_dict = invoice_pay_dict.get(
                                                 each_pos_payment.pos_order_id.name)
                                             total = pay_dict.get("Total")
-                                            if pay_dict.get(each_pos_payment_method.name, False):
+                                            if pay_dict.get(each_pos_payment_method.pos_name, False):
                                                 amount = pay_dict.get(
-                                                    each_pos_payment_method.name)
+                                                    each_pos_payment_method.pos_name)
                                                 total += each_pos_payment.amount
                                                 amount += each_pos_payment.amount
                                                 pay_dict.update(
-                                                    {each_pos_payment_method.name: amount, "Total": total})
+                                                    {each_pos_payment_method.pos_name: amount, "Total": total})
                                             else:
                                                 total += each_pos_payment.amount
                                                 pay_dict.update(
-                                                    {each_pos_payment_method.name: each_pos_payment.amount, "Total": total})
+                                                    {each_pos_payment_method.pos_name: each_pos_payment.amount, "Total": total})
         
                                             invoice_pay_dict.update(
                                                 {each_pos_payment.pos_order_id.name: pay_dict})
                                         else:
-                                            invoice_pay_dict.update({each_pos_payment.pos_order_id.name: {each_pos_payment_method.name: each_pos_payment.amount, "Total": each_pos_payment.amount, "Invoice": each_pos_payment.pos_order_id.name,
+                                            invoice_pay_dict.update({each_pos_payment.pos_order_id.name: {each_pos_payment_method.pos_name: each_pos_payment.amount, "Total": each_pos_payment.amount, "Invoice": each_pos_payment.pos_order_id.name,
                                                                                 "Customer": each_pos_payment.pos_order_id.partner_id.name, "Invoice Date": each_pos_payment.payment_date.date(), "User": each_pos_payment.pos_order_id.user_id.name if each_pos_payment.pos_order_id.user_id else "", "style": 'border: 1px solid black;'}})
                                 elif data.get('filter_invoice_data') and data.get('filter_invoice_data') == 'with_invoice':
                                     if each_pos_payment.pos_order_id.account_move:
@@ -207,22 +207,22 @@ class PaymentReport(models.AbstractModel):
                                                     pay_dict = invoice_pay_dict.get(
                                                         invoice.name)
                                                     total = pay_dict.get("Total")
-                                                    if pay_dict.get(each_pos_payment_method.name, False):
+                                                    if pay_dict.get(each_pos_payment_method.pos_name, False):
                                                         amount = pay_dict.get(
-                                                            each_pos_payment_method.name)
+                                                            each_pos_payment_method.pos_name)
                                                         total += each_pos_payment.amount
                                                         amount += each_pos_payment.amount
                                                         pay_dict.update(
-                                                            {each_pos_payment_method.name: amount, "Total": total})
+                                                            {each_pos_payment_method.pos_name: amount, "Total": total})
                                                     else:
                                                         total += each_pos_payment.amount
                                                         pay_dict.update(
-                                                            {each_pos_payment_method.name: each_pos_payment.amount, "Total": total})
+                                                            {each_pos_payment_method.pos_name: each_pos_payment.amount, "Total": total})
         
                                                     invoice_pay_dict.update(
                                                         {invoice.name: pay_dict})
                                                 else:
-                                                    invoice_pay_dict.update({invoice.name: {each_pos_payment_method.name: each_pos_payment.amount, "Total": each_pos_payment.amount, "Invoice": invoice.name,
+                                                    invoice_pay_dict.update({invoice.name: {each_pos_payment_method.pos_name: each_pos_payment.amount, "Total": each_pos_payment.amount, "Invoice": invoice.name,
                                                                                         "Customer": invoice.partner_id.name, "Invoice Date": invoice.invoice_date, "User": invoice.user_id.name if invoice.user_id else "", "style": 'border: 1px solid black;'}})
                                             if invoice.move_type == "out_refund":
                                                 payment_refund += each_pos_payment.amount
@@ -230,23 +230,23 @@ class PaymentReport(models.AbstractModel):
                                                     pay_dict = invoice_pay_dict.get(
                                                         invoice.name)
                                                     total = pay_dict.get("Total")
-                                                    if pay_dict.get(each_pos_payment_method.name, False):
+                                                    if pay_dict.get(each_pos_payment_method.pos_name, False):
                                                         amount = pay_dict.get(
-                                                            each_pos_payment_method.name)
+                                                            each_pos_payment_method.pos_name)
                                                         total -= each_pos_payment.amount
                                                         amount -= each_pos_payment.amount
                                                         pay_dict.update(
-                                                            {each_pos_payment_method.name: amount, "Total": total})
+                                                            {each_pos_payment_method.pos_name: amount, "Total": total})
                                                     else:
                                                         total -= each_pos_payment.amount
                                                         pay_dict.update(
-                                                            {each_pos_payment_method.name: -1 * (each_pos_payment.amount), "Total": total})
+                                                            {each_pos_payment_method.pos_name: -1 * (each_pos_payment.amount), "Total": total})
         
                                                     invoice_pay_dict.update(
                                                         {invoice.name: pay_dict})
         
                                                 else:
-                                                    invoice_pay_dict.update({invoice.name: {each_pos_payment_method.name: -1 * (each_pos_payment.amount), "Total": -1 * (each_pos_payment.amount), "Invoice": invoice.name,
+                                                    invoice_pay_dict.update({invoice.name: {each_pos_payment_method.pos_name: -1 * (each_pos_payment.amount), "Total": -1 * (each_pos_payment.amount), "Invoice": invoice.name,
                                                                                         "Customer": invoice.partner_id.name, "Invoice Date": invoice.invoice_date, "User": invoice.user_id.name if invoice.user_id else "", "style": 'border: 1px solid black;color:red'}})
                                 elif data.get('filter_invoice_data') and data.get('filter_invoice_data') == 'wo_invoice':
                                     if not currency:
@@ -255,22 +255,22 @@ class PaymentReport(models.AbstractModel):
                                         pay_dict = invoice_pay_dict.get(
                                             each_pos_payment.pos_order_id.name)
                                         total = pay_dict.get("Total")
-                                        if pay_dict.get(each_pos_payment_method.name, False):
+                                        if pay_dict.get(each_pos_payment_method.pos_name, False):
                                             amount = pay_dict.get(
-                                                each_pos_payment_method.name)
+                                                each_pos_payment_method.pos_name)
                                             total += each_pos_payment.amount
                                             amount += each_pos_payment.amount
                                             pay_dict.update(
-                                                {each_pos_payment_method.name: amount, "Total": total})
+                                                {each_pos_payment_method.pos_name: amount, "Total": total})
                                         else:
                                             total += each_pos_payment.amount
                                             pay_dict.update(
-                                                {each_pos_payment_method.name: each_pos_payment.amount, "Total": total})
+                                                {each_pos_payment_method.pos_name: each_pos_payment.amount, "Total": total})
 
                                         invoice_pay_dict.update(
                                             {each_pos_payment.pos_order_id.name: pay_dict})
                                     else:
-                                        invoice_pay_dict.update({each_pos_payment.pos_order_id.name: {each_pos_payment_method.name: each_pos_payment.amount, "Total": each_pos_payment.amount, "Invoice": each_pos_payment.pos_order_id.name,
+                                        invoice_pay_dict.update({each_pos_payment.pos_order_id.name: {each_pos_payment_method.pos_name: each_pos_payment.amount, "Total": each_pos_payment.amount, "Invoice": each_pos_payment.pos_order_id.name,
                                                                             "Customer": each_pos_payment.pos_order_id.partner_id.name, "Invoice Date": each_pos_payment.payment_date.date(), "User": each_pos_payment.pos_order_id.user_id.name if each_pos_payment.pos_order_id.user_id else "", "style": 'border: 1px solid black;'}})
                     # all final list and [{},{},{}] format
                     # here we get the below total.
@@ -305,9 +305,7 @@ class PaymentReport(models.AbstractModel):
                                     'payment_ref': reason,
                                     'amount': amount
                                 }
-
                             })
-
                     for line_id in search_session_id.cash_register_id.line_ids:
                         cash_in_out_dict.update({
                             line_id.name: {
@@ -417,6 +415,7 @@ class PaymentReport(models.AbstractModel):
         for wh in warehouse:
             warehouse_product_sales = {}
             product_data = {}
+            all_pos_products = {}
             #Get specific posconfig for the warehouse specific value
             posconfig = self.env['pos.config'].search([('picking_type_id.warehouse_id','=',wh)])
 
@@ -441,45 +440,47 @@ class PaymentReport(models.AbstractModel):
                 [('picking_id', 'in', stock_move.picking_id.ids), ('move_id', 'in', stock_move.ids)])
 
             #Get the initial and end date of the range of stock_move_line
-            initial_date = self.env['stock.move.line'].browse(min(stock_move_line.ids)).date
-            end_date = self.env['stock.move.line'].browse(max(stock_move_line.ids)).date
+            if stock_move_line.ids:
+                initial_date = self.env['stock.move.line'].browse(min(stock_move_line.ids)).date
+                end_date = self.env['stock.move.line'].browse(max(stock_move_line.ids)).date
 
-            #Get all products that are available in the POS
-            all_pos_products = self.env['product.product'].search([('available_in_pos','=',True),('is_combo','=',False)]).ids
- 
+                #Get all products that are available in the POS
+                all_pos_products = self.env['product.product'].search([('available_in_pos','=',True),('is_combo','=',False)]).ids
+
             #Loop product quantity Movements
-            for product in all_pos_products:
-                other_movements = 0
-                qty_sold = 0
-                product_details = self.env['product.product'].browse(product)
-                #Get product beginning stock
-                begin_qty = product_details.with_context({
-                            'to_date': initial_date + timedelta(seconds=-1),
-                            'warehouse': wh}).qty_available
+            if all_pos_products:
+                for product in all_pos_products:
+                    other_movements = 0
+                    qty_sold = 0
+                    product_details = self.env['product.product'].browse(product)
+                    #Get product beginning stock
+                    begin_qty = product_details.with_context({
+                                'to_date': initial_date + timedelta(seconds=-1),
+                                'warehouse': wh}).qty_available
 
-                #Get product ending stock
-                end_qty = product_details.with_context({
-                            'to_date': end_date + timedelta(seconds=1),
-                            'warehouse': wh}).qty_available
+                    #Get product ending stock
+                    end_qty = product_details.with_context({
+                                'to_date': end_date + timedelta(seconds=1),
+                                'warehouse': wh}).qty_available
 
-                #Compute product movements
-                if product in warehouse_product_sales:
-                    other_movements = begin_qty - end_qty - warehouse_product_sales[product]['qty']
-                    qty_sold = warehouse_product_sales[product]['qty']
+                    #Compute product movements
+                    if product in warehouse_product_sales:
+                        other_movements = begin_qty - end_qty - warehouse_product_sales[product]['qty']
+                        qty_sold = warehouse_product_sales[product]['qty']
+                    
+                    product_data.update({
+                        product_details.id : {
+                            'name': product_details.display_name,
+                            'begin_qty': begin_qty,
+                            'qty_sold': qty_sold,
+                            'end_qty': end_qty,
+                            'other_movements': other_movements 
+                        }
+                    })
                 
-                product_data.update({
-                    product_details.id : {
-                        'name': product_details.display_name,
-                        'begin_qty': begin_qty,
-                        'qty_sold': qty_sold,
-                        'end_qty': end_qty,
-                        'other_movements': other_movements 
-                    }
-                })
-            
-            pos_stock_movement.update({
-                warehouse_id.name : product_data
-                })
+                pos_stock_movement.update({
+                    warehouse_id.name : product_data
+                    })
 
         data.update({
             'date_start': data['date_start'],

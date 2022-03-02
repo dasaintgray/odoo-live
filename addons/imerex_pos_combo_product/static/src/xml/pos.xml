@@ -86,14 +86,14 @@
                     <img t-attf-src="/web/image?model=product.product&amp;field=image_1920&amp;id={{req_product.id}}"/>
                     <t t-if='combo_product_info.req_qty[product_id][0] > 0'>
                         <span class='sh_display_positive_qty' data-toggle="tooltip" title="On Hand Qty">
-                            <div t-att-name='product_id'>
+                            <div t-att-id='product_id'>
                                 <t t-esc='combo_product_info.req_qty[product_id][0]' />
                             </div>
                         </span>
                     </t>
                     <t t-if='0 >= combo_product_info.req_qty[product_id][0]'>
                         <span class='sh_display_nagative_qty' data-toggle="tooltip" title="On Hand Qty">
-                            <div t-att-name='product_id'>
+                            <div t-att-id='product_id'>
                                 <t t-esc='combo_product_info.req_qty[product_id][0]' />
                             </div>
                         </span>
@@ -147,14 +147,14 @@
                     <img t-attf-src="/web/image?model=product.product&amp;field=image_1920&amp;id={{unreq_product.id}}"/>
                     <t t-if='combo_product_info.unreq_qty[product_id][0] > 0'>
                         <span class='sh_display_positive_qty' data-toggle="tooltip" title="On Hand Qty">
-                            <div t-att-name='product_id'>
+                            <div t-att-id='product_id'>
                                 <t t-esc='combo_product_info.unreq_qty[product_id][0]' />
                             </div>
                         </span>
                     </t>
                     <t t-if='0 >= combo_product_info.unreq_qty[product_id][0]'>
                         <span class='sh_display_nagative_qty' data-toggle="tooltip" title="On Hand Qty">
-                            <div t-att-name='product_id'>
+                            <div t-att-id='product_id'>
                                 <t t-esc='combo_product_info.unreq_qty[product_id][0]' />
                             </div>
                         </span>

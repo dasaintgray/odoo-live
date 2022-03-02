@@ -14,7 +14,7 @@ odoo.define('imerex_pos_stock_info.pos', function (require) {
         domain: [['available_in_pos', '=', true]],
         loaded: function (self, all_on_hand_qty) {
             _.each(all_on_hand_qty, function (product) {
-                self.db.on_hand_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0]
+                self.db.on_hand_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0,product['qty_available'], product['virtual_available']]
             })
         }
     })
@@ -112,13 +112,15 @@ odoo.define('imerex_pos_stock_info.pos', function (require) {
                 });
                 _.each(out, function(val){
                     if (document.getElementById(val.product_id)) {
-                        document.getElementById(val.product_id).innerHTML = self.pos.db.on_hand_qty[val.product_id][0] - val.quantity
-                        self.pos.db.combo_qty[val.product_id][0] = self.pos.db.on_hand_qty[val.product_id][0] - val.quantity
+                        document.getElementById(val.product_id).innerHTML = self.pos.db.on_hand_qty[val.product_id][4] - val.quantity
                         }
+                        self.pos.db.on_hand_qty[val.product_id][0] = self.pos.db.on_hand_qty[val.product_id][4] - val.quantity
+                        self.pos.db.combo_qty[val.product_id][0] = self.pos.db.on_hand_qty[val.product_id][4] - val.quantity
                     if (document.getElementsByName(val.product_id).length > 0) {
-                        document.getElementsByName(val.product_id)[0].innerHTML = self.pos.db.on_hand_qty[val.product_id][1] - val.quantity
-                        self.pos.db.combo_qty[val.product_id][1] = self.pos.db.on_hand_qty[val.product_id][1] - val.quantity
+                        document.getElementsByName(val.product_id)[0].innerHTML = self.pos.db.on_hand_qty[val.product_id][4] - val.quantity
                         }
+                        self.pos.db.on_hand_qty[val.product_id][1] = self.pos.db.on_hand_qty[val.product_id][5] - val.quantity
+                        self.pos.db.combo_qty[val.product_id][1] = self.pos.db.on_hand_qty[val.product_id][5] - val.quantity
                 })  
             }
             // if (this.pos.config.sh_enable_on_hand_qty) {

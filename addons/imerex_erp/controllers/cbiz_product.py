@@ -3,6 +3,7 @@ from xml.dom import ValidationErr
 from odoo import fields, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
+from datetime import datetime,timedelta
 
 from odoo.exceptions import ValidationError
 class cBizProductService(Component):
@@ -38,7 +39,7 @@ class cBizProductService(Component):
         input_param=restapi.CerberusValidator("_validator_search"),
         output_param=restapi.CerberusValidator("_validator_return_search")
         )
-    def search(self,name='',code=''):
+    def search(self,name='',code='',branch=''):
         """
         Search Product by Name
         """
@@ -53,6 +54,11 @@ class cBizProductService(Component):
         final_search = self.env['product.template'].search([("id","=",search_ids)])
         return_value = []
         for id in final_search.ids:
+            product = self.env['product.template'].browse(id)
+            #unfinished shit
+            qty = product.with_context({
+                    'to_date': product.date + timedelta(seconds=1),
+                    'warehouse': branch}).qty_available
             return_value.append(self._return_product_values(id))
         return {"products": return_value}
 
@@ -84,13 +90,16 @@ class cBizProductService(Component):
             "code":{"type": "string"},
             "name":{"type": "string"},
             "description": {"type":"string"},
+            "qty": {"type":"float"},
             "image": {"type":"string"}
+
         }
 
     def _validator_search(self):
         return {
             "code":{"type": "string", "required": False},
-            "name":{"type": "string", "required": False},            
+            "name":{"type": "string", "required": False},
+            "branch":{"type": "string", "required": False},              
         }
 
     def _validator_return_search(self):
@@ -112,7 +121,7 @@ class cBizProductService(Component):
             "code": product.code or '',
             "name": product.display_name,
             "description": product.description_sale or '',
-            "image": image
+            "image": image,
         }
 
     def _http_image(self,id):

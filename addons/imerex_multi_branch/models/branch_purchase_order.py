@@ -189,7 +189,6 @@ class PurchaseOrder(models.Model):
             self.picking_type_id = self.env['stock.picking.type'].sudo().search(
                 [('branch_id', '=', False), ('company_id', '=', self.company_id.id)], limit=1)
 
-
 class PurchaseOrderLine(models.Model):
     """inherited purchase order line"""
     _inherit = 'purchase.order.line'

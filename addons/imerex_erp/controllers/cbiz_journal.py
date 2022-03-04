@@ -16,26 +16,27 @@ class cBizJournalService(Component):
 
     @restapi.method(
         [(['/<int:id>'], "GET")],
-        output_param=restapi.CerberusValidator("_validator_return_get")
         )
     def get(self, id):
         """
         Search journal by ID
         """
+
         search_ids = self.env['account.journal'].search([("id","=",id)]).ids
         if not search_ids:
             error_return = {"error": "No Journal with given parameters"}
             return error_return
         final_search = self.env['account.journal'].search([("id","=",search_ids)])
+        
         return_value = {}
         for id in final_search.ids:
             return_value.update(self._return_journal_values(id))
+
         return return_value
 
     @restapi.method(
         [(['/search'], "GET")],
-        input_param=restapi.CerberusValidator("_validator_search"),
-        output_param=restapi.CerberusValidator("_validator_return_search")
+        input_param=restapi.CerberusValidator("_validator_search")
         )
     def search(self,name='',company=''):
         """
@@ -51,38 +52,19 @@ class cBizJournalService(Component):
         if not search_ids:
             error_return = {"error":"No Journal with given parameters"}
             return error_return
+
         final_search = self.env['account.journal'].search([("id","=",search_ids)])
+
         return_value = []
         for id in final_search.ids:
             return_value.append(self._return_journal_values(id))
-        return {"journals": return_value}
-
-    def _validator_return_get(self):
-        return {
-            "id":{"type": "integer"},
-            "name":{"type": "string"},
-            "company":{"type":"string"},
-            "error": {}
-        }
+            
+        return return_value
 
     def _validator_search(self):
         return {
             "name":{"type": "string", "required": False},
             "company":{"type": "string", "required": False},
-        }
-
-    def _validator_return_search(self):
-        schema = {
-            "id": {"type": "integer"},
-            "name":{"type": "string"},
-            "company":{"type":"string"}
-        }
-        return {
-            "journals": {
-                "type": "list",
-                "schema": {"type": "dict", "schema": schema},
-                },
-            "error": {}
         }
         
     def _return_journal_values(self,id):
@@ -90,5 +72,6 @@ class cBizJournalService(Component):
         return {
             "id": journal.id,
             "name": journal.name,
+            "company_id": journal.company_id.id,
             "company": journal.company_id.name
         }

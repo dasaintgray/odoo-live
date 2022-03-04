@@ -30,7 +30,7 @@ class cBizSaleOrderService(Component):
     def _create_sale_order(self,values):
         if 'shipper_id' in values:
             if 'partner_id' in values:
-                return {"error": "Do not use both 'shipper_id' and 'partner_id'"}
+                raise ValidationError("Do not use both 'shipper_id' and 'partner_id'")
             if values['shipper_id']:
                 created_partner = self.env['cbiz.api.cargoapi'].cargo_sync_shipper(values['shipper_id'])
                 values['partner_id'] = created_partner.id
@@ -112,16 +112,9 @@ class cBizSaleOrderService(Component):
 
     def _validator_return_create(self):
         res = {
-            "id": {
-                "type": "integer",
-            },
-            "name": {
-                "type": "string",
-            },
-            "invoice_id": {
-        
-            },
-            "error": {}
+            "id": {"type": "integer"},
+            "name": {"type": "string"},
+            "invoice_id": {"type": "integer"},
         }
         return res
 

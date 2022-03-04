@@ -37,9 +37,8 @@ class cBizProductService(Component):
     @restapi.method(
         [(['/search'], "GET")],
         input_param=restapi.CerberusValidator("_validator_search"),
-        output_param=restapi.CerberusValidator("_validator_return_search")
         )
-    def search(self,name='',code='',branch=''):
+    def search(self,name='',code=''):
         """
         Search Product by Name
         """
@@ -54,19 +53,15 @@ class cBizProductService(Component):
         final_search = self.env['product.template'].search([("id","=",search_ids)])
         return_value = []
         for id in final_search.ids:
-            product = self.env['product.template'].browse(id)
-            #unfinished shit
-            qty = product.with_context({
-                    'to_date': product.date + timedelta(seconds=1),
-                    'warehouse': branch}).qty_available
             return_value.append(self._return_product_values(id))
-        return {"products": return_value}
+        return return_value
 
     @restapi.method(
         [(['/code/'], "GET")],
         input_param=restapi.CerberusValidator("_validator_code"),
         output_param=restapi.CerberusValidator("_validator_return_code")
         )
+
     def code(self,code=''):
         """
         Search Product by Code
@@ -74,6 +69,47 @@ class cBizProductService(Component):
         search_id = self.env['product.template'].search([("code","=",code)]).id
         product = self._return_product_values(search_id)
         return product
+
+    @restapi.method(
+        [(['/qty/'], "GET")],
+        input_param=restapi.CerberusValidator("_validator_qty")
+        )
+    def qty(self,cargo_branch_id,code=''):
+        """
+        Product QTY by Code
+        """
+        branch = self.env['res.branch'].search([('cargo_branch_id','=',cargo_branch_id)])
+        if not branch:
+            raise ValidationError("No Branch with given Cargo ID")
+        location = self.env['stock.warehouse'].search([('branch_id','=',branch.ids)]).view_location_id
+        quantity = self.env['stock.quant']
+        if code:
+            search_ids = self.env['product.template'].search([("code","=",code)]).ids
+        else:
+            search_ids = self.env['product.template'].search([]).ids
+        if not search_ids:
+            raise ValidationError("No Product Found")
+        final_search = self.env['product.template'].search([("id","=",search_ids)])
+        return_value=[]
+        for id in final_search.ids:
+            product = self.env['product.template'].browse(id)
+            qty_available = quantity._get_available_quantity(product, location)
+            details = {}
+            details.update({
+                'id': product.id,
+                'code': product.code,
+                'name': product.display_name,
+                'qty': qty_available,
+                'branch': branch.receipt_branchname
+            })
+            return_value.append(details)
+        return return_value
+
+    def _validator_qty(self):
+        return {
+            "cargo_branch_id": {"type": "string", "required": True},
+            "code": {"type": "string", "required": False, "nullable": True}
+        }
 
     def _validator_code(self):
         return {
@@ -92,7 +128,6 @@ class cBizProductService(Component):
             "description": {"type":"string"},
             "qty": {"type":"float"},
             "image": {"type":"string"}
-
         }
 
     def _validator_search(self):
@@ -101,18 +136,7 @@ class cBizProductService(Component):
             "name":{"type": "string", "required": False},
             "branch":{"type": "string", "required": False},              
         }
-
-    def _validator_return_search(self):
-        schema = self._validator_return_get()
-        return_search = self._validator_return_get()
-        return_search.update({
-            "products": {
-                "type": "list",
-                "schema": {"type": "dict", "schema": schema}
-            }
-        })
-        return return_search
-        
+       
     def _return_product_values(self,id):
         product = self.env['product.template'].browse(id)
         image = self._http_image(id)

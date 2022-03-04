@@ -2,7 +2,7 @@
 from odoo import fields, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
-
+from odoo.exceptions import ValidationError
 class cBizCompanyService(Component):
     _inherit = "base.rest.service"
     _name = "cbiz.company.service"
@@ -24,8 +24,7 @@ class cBizCompanyService(Component):
         """
         search_ids = self.env['res.company'].search([("id","=",id)]).ids
         if not search_ids:
-            error_return = {"error": "No Company with given parameters"}
-            return error_return
+            raise ValidationError("No Company with given parameters")
         final_search = self.env["res.company"].search([("id","=",search_ids)])
         return_value = {}
         for id in final_search.ids:
@@ -43,22 +42,18 @@ class cBizCompanyService(Component):
         """
         search_ids = self.env['res.company'].search([("name","like",name)]).ids
         if not search_ids:
-            error_return = {"error":"No Company with given parameters"}
-            return error_return
+            raise ValidationError("No Company with given parameters")
         final_search = self.env["res.company"].search([("id","=",search_ids)])
         return_value = []
         for id in final_search.ids:
             return_value.append(self._return_company_values(id))
         return {"companies": return_value}
         
-
     def _validator_return_get(self):
         return {
             "id":{"type": "integer"},
             "name":{"type": "string"},
-            "error": {}
         }
-
 
     def _validator_search(self):
         return {
@@ -74,8 +69,7 @@ class cBizCompanyService(Component):
             "companies": {
                 "type": "list",
                 "schema": {"type": "dict", "schema": schema},
-                },
-            "error": {}
+                }
         }
         
     def _return_company_values(self,id):

@@ -2,6 +2,7 @@
 from odoo import _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
+from odoo.exceptions import ValidationError
 
 class cBizInvoiceService(Component):
     _inherit = "base.rest.service"
@@ -25,8 +26,7 @@ class cBizInvoiceService(Component):
         """
         res = self.env['account.move'].search([("ref","=",ref)])
         if not res:
-            error = {"error":"No Invoice with the said reference"}
-            return error
+            raise ValidationError("No Invoice with the said reference")
         return_value = {
             "id": res.id,
             "name": res.name

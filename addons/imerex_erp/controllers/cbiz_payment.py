@@ -1,7 +1,9 @@
 
+from xml.dom import ValidationErr
 from odoo import fields, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
+from odoo.exceptions import ValidationError
 
 class cBizPaymentService(Component):
     _inherit = "base.rest.service"
@@ -28,7 +30,7 @@ class cBizPaymentService(Component):
     def _create_payment(self, values):
         invoice = self.env["account.move"].search([('id','=',values['invoice_id'])])
         if not invoice:
-            return {"error": _("No Invoice Found with requested ID: %s",values['invoice_id'])}
+            raise ValidationError(_("No Invoice Found with requested ID: %s",values['invoice_id']))
         payment = invoice.env['account.payment.register'].with_context({
                         "active_model":"account.move",
                         "active_ids":invoice.id
@@ -59,8 +61,7 @@ class cBizPaymentService(Component):
     def _validator_return_create(self):
         res = {
             "name": {},
-            "amount":{},
-            "error": {"nullable": True}
+            "amount":{}
         }
         return res
 

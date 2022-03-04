@@ -2,7 +2,7 @@
 from odoo import fields, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
-
+from odoo.exceptions import ValidationError
 class cBizBranchService(Component):
     _inherit = "base.rest.service"
     _name = "cbiz.branch.service"
@@ -24,8 +24,7 @@ class cBizBranchService(Component):
         """
         search_ids = self.env['res.branch'].search([("id","=",id)]).ids
         if not search_ids:
-            error_return = {"error": "No Branch with given parameters"}
-            return error_return
+            raise ValidationError("No Branch with given parameters")
         final_search = self.env["res.branch"].search([("id","=",search_ids)])
         return_value = {}
         for id in final_search.ids:
@@ -35,7 +34,6 @@ class cBizBranchService(Component):
     @restapi.method(
         [(['/search'], "GET")],
         input_param=restapi.CerberusValidator("_validator_search"),
-        output_param=restapi.CerberusValidator("_validator_return_search")
         )
     def search(self,name='',company=''):
         """
@@ -49,21 +47,19 @@ class cBizBranchService(Component):
             search_company = self.env['res.branch'].search([("company_id.name","like",company)]).ids
             search_ids = list(set(search_company)&set(search_ids))
         if not search_ids:
-            error_return = {"error":"No Branch with given parameters"}
-            return error_return
+            raise ValidationError("No Branch with given parameters")
         final_search = self.env["res.branch"].search([("id","=",search_ids)])
         return_value = []
         for id in final_search.ids:
             return_value.append(self._return_branch_values(id))
-        return {"branches": return_value}
+        return return_value
         
 
     def _validator_return_get(self):
         return {
             "id":{"type": "integer"},
             "name":{"type": "string"},
-            "company":{"type":"string"},
-            "error": {}
+            "company":{"type":"string"}
         }
 
 
@@ -83,8 +79,7 @@ class cBizBranchService(Component):
             "branches": {
                 "type": "list",
                 "schema": {"type": "dict", "schema": schema},
-                },
-            "error": {}
+                }
         }
         
     def _return_branch_values(self,id):

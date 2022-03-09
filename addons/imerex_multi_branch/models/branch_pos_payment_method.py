@@ -7,5 +7,5 @@ from odoo.osv.expression import AND
 class PosPaymentMethod(models.Model):
     _inherit = "pos.payment.method"
 
-    pos_name = fields.Char("Name in POS Receipt")
+    pos_name = fields.Char("Name in POS Receipt",required=True)
     branch_id = fields.Many2one("res.branch", string='Branch', store=True)

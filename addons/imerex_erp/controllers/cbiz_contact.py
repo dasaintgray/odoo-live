@@ -1,8 +1,12 @@
-
-from odoo import fields, _
+import os
+import re
+import base64
+import logging
+from odoo import api, fields, models, tools, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
-
+from odoo.tools import config, human_size, ustr, html_escape, ImageProcess, str2bool
+_logger = logging.getLogger(__name__)
 class cBizContactService(Component):
     _inherit = "base.rest.service"
     _name = "cbiz.contact.service"
@@ -21,9 +25,9 @@ class cBizContactService(Component):
         """
         Get Contact Information
         """
-        res_partner = self.env["res.partner"].search([("id","=",_id)])
+        
         image = self._http_image(_id)
-        values = self._return_contact_values(res_partner,image)
+        values = self._return_contact_values(_id,image)
         return values
 
     @restapi.method(
@@ -35,13 +39,17 @@ class cBizContactService(Component):
         """
         Create Contacts
         """
-        partner = self._create_contact(params)
+        if 'password' in params:
+            user = self._create_user
+            params.pop('password')
+            partner = self._update_contact(user.partner_id.id,params)
+        else:
+            partner = self._create_contact(params)
         return partner
 
     @restapi.method(
         [(['/search'], "GET")],
         input_param=restapi.CerberusValidator("_validator_search"),
-        output_param=restapi.CerberusValidator("_validator_return_search")
         )
     def search(self, name=False, shipper_id=False, type=False):
         """
@@ -52,21 +60,66 @@ class cBizContactService(Component):
             name_search = self.env["res.partner"].search([("name","like",name)]).ids
             search_id = name_search
         if shipper_id:
-            shipper_id_search = self.env["res.partner"].search([("shipper_id","=",shipper_id)]).ids
+            shipper_id_search = self.env["res.partner"].search([("shipper_id","in",shipper_id)]).ids
             search_id = list(set(search_id)&set(shipper_id_search))
         if type:
             if not type == "all":
                 type_search = self.env["res.partner"].search([("type","=",type)]).ids
-                search_id = list(set(search_id)&set(type_search))
-        partners = self.env["res.partner"].search([("id","=",search_id)])
-        if partners:
-            partners = partners.browse([i for i in partners.ids])
-        rows = []
-        res = {"count": len(partners) if partners else 0, "rows": rows}
-        if partners:
-            for partner in partners:
-                rows.append(self._return_contact_values(partner))
-        return res
+                search_id = list(set(search_id)&set(type_search))       
+        if search_id:
+            ids = ", ".join(repr(id) for id in search_id)
+            self.env.cr.execute(_("""
+                SELECT * FROM (SELECT
+                res_partner.id,
+                res_partner.name,
+                res_partner.type,
+                res_partner.shipper_id,
+                res_partner.first_name,
+                res_partner.last_name,
+                res_partner.name_ext,
+                res_partner.phone,
+                res_partner.mobile,
+                res_partner.vat,
+                res_partner.email,
+                res_partner.branch_id,
+                res_users.active
+                FROM res_partner
+                LEFT JOIN res_users ON (res_partner.id = res_users.partner_id)
+                WHERE res_partner.id IN (%s)) table1 LEFT JOIN
+                (SELECT
+                ir_attachment.res_id,
+                ir_attachment.store_fname
+                FROM ir_attachment
+                WHERE ir_attachment.res_field='image_1920') table2 ON
+                table1.id = table2.res_id
+            """,ids))
+            data = self.env.cr.fetchall()
+            rows=[]
+            for i in data:
+                image = ''
+                if i[14]:
+                    imagedata = ''
+                    imagery = self.env['ir.attachment']._file_read(i[14])
+                    imagedata = base64.b64encode(imagery or b'')
+                    image = "data:image;base64," + imagedata.decode('utf-8')
+                datarow={
+                    "id":i[0] or False,
+                    "name":i[1] or False,
+                    "type":i[2] or False,
+                    "shipper_id":i[3] or False,
+                    "first_name":i[4] or False,
+                    "last_name":i[5] or False,
+                    "name_ext":i[6] or False,
+                    "phone":i[7] or False,
+                    "mobile":i[8] or False,
+                    "vat":i[9] or False, 
+                    "email":i[10] or False,
+                    "branch_id":i[11] or False,
+                    "is_user":i[12] or False,
+                    "image_1920": image or False
+                }
+                rows.append(datarow)
+        return rows
 
     @restapi.method(
         [(['/<int:_id>'], "PATCH")],
@@ -82,6 +135,7 @@ class cBizContactService(Component):
 
     def _validator_return_get(self):
         res = self._validator_contact_fields()
+        res.update({'is_user':{'type':'boolean'}})
         return res
 
     def _validator_create(self):
@@ -151,7 +205,7 @@ class cBizContactService(Component):
                         field : values[field]
                     })
         created_contact = create_contact.create(contact_info)
-        return_contact = self._return_contact_values(created_contact,values["image_1920"])
+        return_contact = self._return_contact_values(created_contact)
         return return_contact
 
     def _update_contact(self,id,values):
@@ -220,32 +274,31 @@ class cBizContactService(Component):
             ]
         return cbiz_fields
 
-    def _return_contact_values(self,create_contact,image_1920=False):
-        return_contact = {
-            "id": create_contact.id,
-            "name": create_contact.name,
-            "type": create_contact.type,
-            "image_1920": image_1920,
-            "shipper_id": create_contact.shipper_id,
-            "first_name": create_contact.first_name,
-            "last_name": create_contact.last_name,
-            "name_ext": create_contact.name_ext,
-            "phone": create_contact.phone,
-            "mobile": create_contact.mobile,
-            "vat": create_contact.vat,
-            "email": create_contact.email,
-            "branch_id": False
+    def _return_contact_values(self,id):
+        res_partner = self.env["res.partner"].browse(id)
+        return {
+            "id": res_partner.id,
+            "name": res_partner.name,
+            "type": res_partner.type,
+            "image_1920": self._http_image(id) or False,
+            "shipper_id": res_partner.shipper_id,
+            "first_name": res_partner.first_name,
+            "last_name": res_partner.last_name,
+            "name_ext": res_partner.name_ext,
+            "phone": res_partner.phone,
+            "mobile": res_partner.mobile,
+            "vat": res_partner.vat,
+            "email": res_partner.email,
+            "branch_id": False,
+            "is_user": res_partner.user_ids.active or False
         }
-        if not return_contact['image_1920']:
-            return_contact['image_1920'] = self._http_image(create_contact.id)
-        return return_contact
 
     def _http_image(self,id):
-        status,headers,image = self.env["ir.http"].binary_content(
+        status,headers,data = self.env["ir.http"].binary_content(
             model="res.partner", id=id, field="image_1920"
         )
-        if isinstance(image,bytes):
-            image_string = "data:image;base64," + image.decode('utf-8')
+        if data:
+            return "data:image;base64," + data.decode('utf-8')
         else:
-            image_string = "data:image;base64," + image
-        return image_string
+            return False
+

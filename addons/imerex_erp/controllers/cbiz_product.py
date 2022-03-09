@@ -46,7 +46,11 @@ class cBizProductService(Component):
         if name:
             search_ids = self.env['product.template'].search([("|"),("name","like",name),("default_code","=",name)]).ids
         if code:
-            search_code = self.env['product.template'].search([("code","=",code)]).ids
+            if ',' in code:
+                codes = code.split(',')
+                search_code = self.env['product.template'].search([("code","in",codes)]).ids
+            else:
+                search_code = self.env['product.template'].search([("code","=",code)]).ids
             search_ids = list(set(search_code)&set(search_ids))
         if not search_ids:
             raise ValidationError("No Product Found")

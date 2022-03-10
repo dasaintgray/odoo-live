@@ -1,12 +1,8 @@
-import os
-import re
 import base64
-import logging
+from odoo.exceptions import ValidationError
 from odoo import api, fields, models, tools, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
-from odoo.tools import config, human_size, ustr, html_escape, ImageProcess, str2bool
-_logger = logging.getLogger(__name__)
 class cBizContactService(Component):
     _inherit = "base.rest.service"
     _name = "cbiz.contact.service"
@@ -25,7 +21,6 @@ class cBizContactService(Component):
         """
         Get Contact Information
         """
-        
         image = self._http_image(_id)
         values = self._return_contact_values(_id,image)
         return values
@@ -39,10 +34,10 @@ class cBizContactService(Component):
         """
         Create Contacts
         """
+        #check params for password, if yes, a user will be created instead of contact
         if 'password' in params:
-            user = self._create_user
-            params.pop('password')
-            partner = self._update_contact(user.partner_id.id,params)
+            user = self._create_user(params)
+            partner = self._return_contact_values(user.partner_id.id)
         else:
             partner = self._create_contact(params)
         return partner
@@ -55,71 +50,29 @@ class cBizContactService(Component):
         """
         Search Contacts by ID, Name, or Shipper_id
         """
+        #Default Search IDs if no params given
         search_id =  self.env["res.partner"].search([]).ids
+
+        #Check for name params in GET URL
         if name:
             name_search = self.env["res.partner"].search([("name","like",name)]).ids
-            search_id = name_search
+            search_id = list(set(search_id)&set(name_search))
+        
+        #Check for shipper_id params in GET URL
         if shipper_id:
             shipper_id_search = self.env["res.partner"].search([("shipper_id","in",shipper_id)]).ids
             search_id = list(set(search_id)&set(shipper_id_search))
-        if type:
-            if not type == "all":
-                type_search = self.env["res.partner"].search([("type","=",type)]).ids
-                search_id = list(set(search_id)&set(type_search))       
+
+        #Check for type params in GET URL
+        if type and not type == "all":
+            type_search = self.env["res.partner"].search([("type","=",type)]).ids
+            search_id = list(set(search_id)&set(type_search))
+
+        #If search_id found, bypass odoo search ORM and use odoo cursor ORM for batch lookup to database of Contact with _return_contact_list
         if search_id:
-            ids = ", ".join(repr(id) for id in search_id)
-            self.env.cr.execute(_("""
-                SELECT * FROM (SELECT
-                res_partner.id,
-                res_partner.name,
-                res_partner.type,
-                res_partner.shipper_id,
-                res_partner.first_name,
-                res_partner.last_name,
-                res_partner.name_ext,
-                res_partner.phone,
-                res_partner.mobile,
-                res_partner.vat,
-                res_partner.email,
-                res_partner.branch_id,
-                res_users.active
-                FROM res_partner
-                LEFT JOIN res_users ON (res_partner.id = res_users.partner_id)
-                WHERE res_partner.id IN (%s)) table1 LEFT JOIN
-                (SELECT
-                ir_attachment.res_id,
-                ir_attachment.store_fname
-                FROM ir_attachment
-                WHERE ir_attachment.res_field='image_1920') table2 ON
-                table1.id = table2.res_id
-            """,ids))
-            data = self.env.cr.fetchall()
-            rows=[]
-            for i in data:
-                image = ''
-                if i[14]:
-                    imagedata = ''
-                    imagery = self.env['ir.attachment']._file_read(i[14])
-                    imagedata = base64.b64encode(imagery or b'')
-                    image = "data:image;base64," + imagedata.decode('utf-8')
-                datarow={
-                    "id":i[0] or False,
-                    "name":i[1] or False,
-                    "type":i[2] or False,
-                    "shipper_id":i[3] or False,
-                    "first_name":i[4] or False,
-                    "last_name":i[5] or False,
-                    "name_ext":i[6] or False,
-                    "phone":i[7] or False,
-                    "mobile":i[8] or False,
-                    "vat":i[9] or False, 
-                    "email":i[10] or False,
-                    "branch_id":i[11] or False,
-                    "is_user":i[12] or False,
-                    "image_1920": image or False
-                }
-                rows.append(datarow)
-        return rows
+            return self._return_contact_list(search_id)
+        else:
+            raise ValidationError("No Contact or Users Found")
 
     @restapi.method(
         [(['/<int:_id>'], "PATCH")],
@@ -146,6 +99,9 @@ class cBizContactService(Component):
             "type": "string",
             "required": True,
             "allowed": ["shipper", "consignee", "contact"]
+        }
+        res["password"] = {
+            "type": "string"
         }
         return res
 
@@ -187,6 +143,13 @@ class cBizContactService(Component):
             "update": {}
         }
         return res
+    def _create_user(self,values):
+        values["name"] = self._merge_names(values)
+        values["login"] = values["email"]
+        create_user = self.env['res.users']
+        created_user = create_user.create(values)
+        return created_user
+        
 
     def _create_contact(self,values):
         contact_info = {}
@@ -292,6 +255,66 @@ class cBizContactService(Component):
             "branch_id": False,
             "is_user": res_partner.user_ids.active or False
         }
+
+    def _return_contact_list(self,search_ids):
+            #stringify the search_id string to be fed on odoo cursor ORM
+            ids = ", ".join(repr(id) for id in search_ids)
+            #Odoo Cursor ORM for PostgreSQL Query, Joined the res_partner, res_user, and attachment table
+            self.env.cr.execute(_("""
+                SELECT * FROM (SELECT
+                res_partner.id,
+                res_partner.name,
+                res_partner.type,
+                res_partner.shipper_id,
+                res_partner.first_name,
+                res_partner.last_name,
+                res_partner.name_ext,
+                res_partner.phone,
+                res_partner.mobile,
+                res_partner.vat,
+                res_partner.email,
+                res_partner.branch_id,
+                res_users.active
+                FROM res_partner
+                LEFT JOIN res_users ON (res_partner.id = res_users.partner_id)
+                WHERE res_partner.id IN (%s)) table1 LEFT JOIN
+                (SELECT
+                ir_attachment.res_id,
+                ir_attachment.store_fname
+                FROM ir_attachment
+                WHERE ir_attachment.res_field='image_1920') table2 ON
+                table1.id = table2.res_id
+            """,ids))
+            #data fetched from postgreSQL temporary cache
+            data = self.env.cr.fetchall()
+            rows=[]
+            #Fast internal looping for the list of users,contacts
+            for i in data:
+                image = ''
+                #verify if there is store_fname value to get it from the filestore attachment
+                if i[14]:
+                    imagedata = ''
+                    imagery = self.env['ir.attachment']._file_read(i[14])
+                    imagedata = base64.b64encode(imagery or b'')
+                    image = "data:image;base64," + imagedata.decode('utf-8')
+                datarow={
+                    "id":i[0] or False,
+                    "name":i[1] or False,
+                    "type":i[2] or False,
+                    "shipper_id":i[3] or False,
+                    "first_name":i[4] or False,
+                    "last_name":i[5] or False,
+                    "name_ext":i[6] or False,
+                    "phone":i[7] or False,
+                    "mobile":i[8] or False,
+                    "vat":i[9] or False, 
+                    "email":i[10] or False,
+                    "branch_id":i[11] or False,
+                    "is_user":i[12] or False,
+                    "image_1920": image or False
+                }
+                rows.append(datarow)
+            return rows
 
     def _http_image(self,id):
         status,headers,data = self.env["ir.http"].binary_content(

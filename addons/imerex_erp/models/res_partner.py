@@ -110,9 +110,9 @@ class ResPartner(models.Model):
         #If no shipper_id, shipper contact will create a data in shipper service CircuitTrack
         if not self.shipper_id and self.type == 'shipper':
             sync = self.env['cbiz.api.cargoapi'].cargo_create_shipper(self)
-            if sync:
-                vals['shipper_id'] = sync['shipperId']
-                vals['loyalty_id'] = 8800000000000 + sync['shipperId']
+            if sync.text:
+                vals['shipper_id'] = sync.text
+                vals['loyalty_id'] = 8800000000000 + str(sync.text)
         #if shipper with shipper_id, will update data in shipper service CircuitTrack
         elif self.type == 'shipper':
             #check if created by odoo

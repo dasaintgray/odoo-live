@@ -160,7 +160,7 @@ class cBizCargoAPI(models.Model):
             api_data = json.dumps(api_body)
             api_request = requests.post(apicargo['shipper_url'], data=api_data, headers=apicargo['headers'])
             api_response = self.env['cbiz.api'].api_validation(api_request)
-            return api_response.json()
+            return api_response
 
     def cargo_update_shipper(self,values,res_partner):
         apicargo = self.env['cbiz.api'].api_headers()
@@ -231,7 +231,7 @@ class cBizCargoAPI(models.Model):
             api_data = json.dumps(api_body)
             api_request = requests.put(apicargo['shipper_url'], data=api_data, headers=apicargo['headers'])
             api_response = self.env['cbiz.api'].api_validation(api_request)
-            return api_response.json()
+            return api_response
 
     def cargo_get_shipper(self,shipper_id):
         apicargo = self.env['cbiz.api'].api_headers()
@@ -239,7 +239,7 @@ class cBizCargoAPI(models.Model):
             api_url = apicargo['shipper_url'] + str(shipper_id)
             api_request = requests.get(api_url, headers=apicargo['headers'])
             api_response = self.env['cbiz.api'].api_validation(api_request)
-            return api_response.json()
+            return api_response
 
     def cargo_sync_shipper(self,shipper_id):
         check_partner = self.env['res.partner'].search([('shipper_id','=',shipper_id)])

@@ -168,7 +168,7 @@ class cBizContactService(Component):
                         field : values[field]
                     })
         created_contact = create_contact.create(contact_info)
-        return_contact = self._return_contact_values(created_contact)
+        return_contact = self._return_contact_values(created_contact.id)
         return return_contact
 
     def _update_contact(self,id,values):

@@ -15,6 +15,7 @@ class ResPartner(models.Model):
     name_ext = fields.Char("Suffix")
     co_name = fields.Char("Company Name")
     brgy = fields.Char("Barangay or Area", size=64)
+    loyalty_id = fields.Float("Loyalty ID",digits=[13,0])
     city_id = fields.Many2one("imerex_erp.city", "City Address")
     shipper_id = fields.Char("Shipper ID", size=64)
     hashrow = fields.Char("HashRow", size=64)
@@ -100,6 +101,7 @@ class ResPartner(models.Model):
     def write(self, vals):
         #Do not change Address/Contact Type if Shipper
         if self.shipper_id:
+            vals['loyalty_id'] = 8800000000000 + str(self.shipper_id)
             try:
                 if not self.type == vals['type']:
                     raise ValidationError("Already Synced as a Shipper in CircuitTrack! you cannot edit address type")
@@ -108,8 +110,9 @@ class ResPartner(models.Model):
         #If no shipper_id, shipper contact will create a data in shipper service CircuitTrack
         if not self.shipper_id and self.type == 'shipper':
             sync = self.env['cbiz.api.cargoapi'].cargo_create_shipper(self)
-            if sync.text:
-                vals['shipper_id'] = sync.text
+            if sync:
+                vals['shipper_id'] = sync['shipperId']
+                vals['loyalty_id'] = 8800000000000 + sync['shipperId']
         #if shipper with shipper_id, will update data in shipper service CircuitTrack
         elif self.type == 'shipper':
             #check if created by odoo

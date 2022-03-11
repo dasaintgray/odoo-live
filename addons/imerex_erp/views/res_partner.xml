@@ -22,6 +22,7 @@
 					<field name="shipper_id" attrs="{'invisible': True}"/>
 					<field name="hashrow" attrs="{'invisible': True}"/>
 					<field name="type" placeholder="Address Type" attrs="{'required' : [('company_type','=','person')], 'invisible' : [('company_type','!=','person')]}"/>
+					<field name="loyalty_id" options="{'format': 0}" attrs="{'readonly': True, 'force_save': True,'invisible' : [('loyalty_id','=', 0)] }"/>
 					<field name="vat" string="Tax ID or IQAMA" attrs="{'required' : [('company_type','=','person')], 'invisible' : [('company_type','!=','person')]}"/>
 					<field name="co_name" placeholder="Company Name" attrs="{'required' : [('company_type','=','company')], 'invisible' : [('company_type','=','person')]}"/>
 					<field name="first_name" placeholder="First Name" attrs="{'required' : [('company_type','=','person')], 'invisible' : [('company_type','!=','person')]}"/>

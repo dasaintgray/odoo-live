@@ -114,6 +114,7 @@ class cBizCargoAPI(models.Model):
         if apicargo['token']:
             #initialize constant values
             api_body = {
+                "customertype": "shipper",
                 "remarks": "Created by CBIZ",
                 "isactive": True,
                 "countryId":3,
@@ -159,7 +160,7 @@ class cBizCargoAPI(models.Model):
             api_data = json.dumps(api_body)
             api_request = requests.post(apicargo['shipper_url'], data=api_data, headers=apicargo['headers'])
             api_response = self.env['cbiz.api'].api_validation(api_request)
-            return api_response
+            return api_response.json()
 
     def cargo_update_shipper(self,values,res_partner):
         apicargo = self.env['cbiz.api'].api_headers()
@@ -230,7 +231,7 @@ class cBizCargoAPI(models.Model):
             api_data = json.dumps(api_body)
             api_request = requests.put(apicargo['shipper_url'], data=api_data, headers=apicargo['headers'])
             api_response = self.env['cbiz.api'].api_validation(api_request)
-            return api_response
+            return api_response.json()
 
     def cargo_get_shipper(self,shipper_id):
         apicargo = self.env['cbiz.api'].api_headers()
@@ -265,11 +266,12 @@ class cBizCargoAPI(models.Model):
                 'shipper_id': cargo_get_shipper['shipperId'],
                 'first_name': cargo_get_shipper['shipperFirstName'].title(),
                 'last_name': cargo_get_shipper['shipperLastName'].title(),
-                'name_ext': cargo_get_shipper['shipperExt'] if cargo_get_shipper['shipperExt'] else False,
-                'phone': cargo_get_shipper['shipperPhoneNumber'] if cargo_get_shipper['shipperPhoneNumber'] else False,
-                'mobile': cargo_get_shipper['shipperMobileNo'] if cargo_get_shipper['shipperMobileNo'] else False,
-                'vat': cargo_get_shipper['residenceIdNumber'] if cargo_get_shipper['residenceIdNumber'] else False,
-                'email': cargo_get_shipper['emailaddress'] if cargo_get_shipper['emailaddress'] else False,
+                'name_ext': cargo_get_shipper['shipperExt'] or False,
+                'phone': cargo_get_shipper['shipperPhoneNumber'] or False,
+                'mobile': cargo_get_shipper['shipperMobileNo'] or False,
+                'vat': cargo_get_shipper['residenceIdNumber'] or False,
+                'email': cargo_get_shipper['emailaddress'] or False,
+                'loyalty_id': 8800000000000 + cargo_get_shipper['shipperId'],
                 'branch_id': False
             }
             create_partner = syncing.create(values)

@@ -50,8 +50,9 @@ class Partners(models.Model):
     def create(self, vals):
         prefix = str(self.env['ir.config_parameter'].sudo().get_param(
             'customer_product_qr.config.customer_prefix'))
-        if not prefix:
-            raise UserError(_('Set A Customer Prefix In General Settings'))
+        if prefix == 'False':
+            prefix = ''
+            # raise UserError(_('Set A Customer Prefix In General Settings'))
         seq = prefix + self.env['ir.sequence'].next_by_code(
             'res.partner') or '/'
         vals['sequence'] = seq
@@ -63,9 +64,10 @@ class Partners(models.Model):
             if not self.sequence:
                 prefix = str(self.env['ir.config_parameter'].sudo().get_param(
                     'customer_product_qr.config.customer_prefix'))
-                if not prefix:
-                    raise UserError(
-                        _('Set A Customer Prefix In General Settings'))
+                if prefix == 'False':
+                    prefix = ''
+                    # raise UserError(
+                    #     _('Set A Customer Prefix In General Settings'))
                 self.sequence = prefix + self.env['ir.sequence'].next_by_code(
                     'res.partner') or '/'
             qr = qrcode.QRCode(

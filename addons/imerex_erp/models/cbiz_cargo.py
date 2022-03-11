@@ -239,7 +239,7 @@ class cBizCargoAPI(models.Model):
             api_url = apicargo['shipper_url'] + str(shipper_id)
             api_request = requests.get(api_url, headers=apicargo['headers'])
             api_response = self.env['cbiz.api'].api_validation(api_request)
-            return api_response
+            return api_response.json()
 
     def cargo_sync_shipper(self,shipper_id):
         check_partner = self.env['res.partner'].search([('shipper_id','=',shipper_id)])

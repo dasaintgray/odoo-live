@@ -14,5 +14,6 @@ from . import branch_account_move
 from . import branch_account_payment
 from . import branch_account_journal
 from . import branch_account_account
+from . import branch_stock_return_picking
 from . import branch_stock_warehouse
 from . import company_pricelist

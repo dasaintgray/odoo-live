@@ -65,8 +65,9 @@ class StockPicking(models.Model):
                 )
             if branch:
                 order.branch_id = branch.ids[0]
-            else:
-                order.branch_id = False
+            # else:
+            #     if order.branch_id:
+            #         order.branch_id = False
             if order.sale_id or order.purchase_id:
                 if order.sale_id.branch_id:
                     order.branch_id = order.sale_id.branch_id

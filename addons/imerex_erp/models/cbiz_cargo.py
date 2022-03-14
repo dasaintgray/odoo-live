@@ -10,7 +10,7 @@ import sys
 import time
 from jose import jwt
 class cBizCargoJWT(models.Model):
-    """
+    _description="""
     Base Class for API Integration with CargoAPI
     """
     _name='cbiz.api'
@@ -101,8 +101,14 @@ class cBizCargoJWT(models.Model):
         api_data_payload = sys.getsizeof(api_bytes) / (1024*1024)
         api_length
 
+    def automation(self):
+        """For running only with emergency"""
+        cancel_orders = self.env['sale.order'].search([("company_id.name","like","Packaging"),("state","=","draft")],limit=2000)
+        # for order in cancel_orders:
+        #     order.action_confirm()
+
 class cBizCargoAPI(models.Model):
-    """
+    _description="""
     Cargo API
     Internal Class for Cargo Integration
     """

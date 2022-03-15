@@ -1,4 +1,6 @@
 
+import pytz
+from datetime import tzinfo
 from odoo import fields, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
@@ -51,7 +53,10 @@ class cBizSaleOrderService(Component):
             values['payment_journal_id'] = default_id[0] 
         sale_order_fields = self._sale_order_fields()
         sale_order_values={}
-        values['date_order'] = fields.Datetime.from_string(values['date_order'])
+        user_tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
+        date_order = user_tz.localize(fields.Datetime.from_string(values['date_order']))
+        date_order_utc = date_order.astimezone(pytz.timezone('UTC'))
+        values['date_order'] = fields.Datetime.to_string(date_order_utc)
         for order_data in sale_order_fields:
             if order_data in values:
                 if not order_data == 'order_line':

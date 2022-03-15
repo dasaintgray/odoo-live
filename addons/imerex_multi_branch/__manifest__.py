@@ -12,7 +12,7 @@
     'category': 'Tools',
     'depends': ['sale_management',
                 'sale_stock', 'purchase_stock',
-                'stock_account','point_of_sale'],
+                'stock_account','point_of_sale','stock'],
     'data': [
         'security/branch_security.xml',
         'security/ir.model.access.csv',
@@ -33,7 +33,8 @@
         'views/branch_account_journal.xml',
         'views/branch_account_views.xml',
         'views/branch_stock_warehouse_views.xml',
-        'views/branch_report_template.xml'
+        'views/branch_report_template.xml',
+        'views/branch_stock_scrap.xml'
     ],
     'qweb': ['static/src/xml/pos.xml'],
     # 'images': ['static/description/banner.jpg'],

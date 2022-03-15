@@ -30,6 +30,7 @@ class cBizSaleOrderService(Component):
         return created_sale_order
 
     def _create_sale_order(self,values):
+        #check shipper_id to sync with CircuitTrack
         if 'shipper_id' in values:
             if 'partner_id' in values:
                 raise ValidationError("Do not use both 'shipper_id' and 'partner_id'")
@@ -38,35 +39,56 @@ class cBizSaleOrderService(Component):
                 values['partner_id'] = created_partner.id
                 # values['partner_invoice_id'] = created_partner.id
                 # values['partner_shipping_id'] = created_partner.id
+
+        #use cargo_branch_id to search for branch_id which is required by sale order
         if 'cargo_branch_id' in values:
             values['branch_id'] = self.env['res.branch'].search([('cargo_branch_id','=',values['cargo_branch_id'])]).id
             if not values['branch_id']:
                 raise ValidationError('No Branch with the given Cargo ID')
+
+        #default value for company_id
         if 'company_id' not in values:
             values['company_id'] = 1
+
+        #Check if company has branches or not
         if 'branch_id' not in values:
             test_branch_in_company = self.env['res.branch'].search([('company_id','=',values['company_id'])]).ids
             if test_branch_in_company:
                 raise ValidationError('Branch is required in the given Company!')
+
+        #default bank journal ID of company
         if 'payment_journal_id' not in values:
             default_id = self.env['account.journal'].search([('company_id','=',values['company_id']),('type','=','bank')]).ids
             values['payment_journal_id'] = default_id[0] 
+
         sale_order_fields = self._sale_order_fields()
         sale_order_values={}
+
+        #convert from local to utc as Odoo framework stores date in UTC for easy conversion
         user_tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
+        #convert string to datetime format for local time
         date_order = user_tz.localize(fields.Datetime.from_string(values['date_order']))
+        #change timezone to UTC
         date_order_utc = date_order.astimezone(pytz.timezone('UTC'))
+        #bring the converted value back to the dict with key date_order
         values['date_order'] = fields.Datetime.to_string(date_order_utc)
+
+        #serialize order fields except for order_line
         for order_data in sale_order_fields:
             if order_data in values:
                 if not order_data == 'order_line':
                     sale_order_values.update({
                             order_data: values[order_data]
                         })
+
+        #create sales order without orderline
         created_sale_order = self.env['sale.order'].create(sale_order_values)
 
+
+        #create sales order_line and attach to sales order
         sale_order_line_values=[]
         sale_order_line_fields = self._sale_order_line_fields()
+        #serialize order_line fields
         for order_line_item in values['order_line']:
             order_line_values={}
             if 'code' in order_line_item:
@@ -84,7 +106,9 @@ class cBizSaleOrderService(Component):
             sale_order_line_values.append({
                 created_sale_order_lines
             })
+        #confirm the sales_order
         created_sale_order.action_confirm()
+        #get return value to dict instead of model
         return_sale_order = self._return_create_values(created_sale_order)
         return return_sale_order
 

@@ -84,7 +84,6 @@ class cBizSaleOrderService(Component):
         #create sales order without orderline
         created_sale_order = self.env['sale.order'].create(sale_order_values)
 
-
         #create sales order_line and attach to sales order
         sale_order_line_values=[]
         sale_order_line_fields = self._sale_order_line_fields()

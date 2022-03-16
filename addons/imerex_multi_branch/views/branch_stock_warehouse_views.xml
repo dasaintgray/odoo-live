@@ -31,6 +31,7 @@
                 <field name="arch" type="xml">
                     <xpath expr="//field[@name='company_id']" position="after">
                         <field name="branch_id" options="{'no_create': True}"/>
+                        <field name="branch_location_ids" attrs="{'invisible': True}"/>
                     </xpath>
                 </field>
         </record>
@@ -65,6 +66,7 @@
                 <field name="arch" type="xml">
                     <xpath expr="//field[@name='owner_id']" position="after">
                         <field name="branch_id" options="{'no_create': True}"/>
+                        <field name="branch_location_ids" attrs="{'invisible': True}"/>
                     </xpath>
                 </field>
         </record>
@@ -99,6 +101,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//page[@name='other_info']//field[@name='company_id']" position="after">
                     <field name="branch_id" options="{'no_create': True}"/>
+                    <field name="branch_location_ids" attrs="{'invisible': True}"/>
                 </xpath>
             </field>
         </record>

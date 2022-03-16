@@ -104,31 +104,31 @@
         <record model="ir.rule" id="stock_picking_branch_rule">
             <field name="name">stock_picking multi-branch</field>
             <field name="model_id" search="[('model','=','stock.picking')]" model="ir.model"/>
-            <field name="domain_force">['|',('branch_id','=',False),('branch_id', 'in', user.branch_ids.ids)]</field>
+            <field name="domain_force">['|',('branch_id','=',False),('branch_location_ids', 'in', user.branch_ids.ids)]</field>
         </record>
 
         <record model="ir.rule" id="stock_picking_type_branch_rule">
             <field name="name">Stock Operation Type multi-branch</field>
             <field name="model_id" search="[('model','=','stock.picking.type')]" model="ir.model"/>
-            <field name="domain_force">['|',('branch_id','=',False),('branch_id', 'in', user.branch_ids.ids)]</field>
+            <field name="domain_force">['|',('branch_id','=',False),'|',('code','=','internal'),('branch_id', 'in', user.branch_ids.ids)]</field>
         </record>
 
-        <record model="ir.rule" id="stock_warehouse_branch_rule">
+        <!-- <record model="ir.rule" id="stock_warehouse_branch_rule">
             <field name="name">Warehouse multi-branch</field>
             <field name="model_id" ref="model_stock_warehouse"/>
             <field name="domain_force">['|',('branch_id','=',False),('branch_id', 'in', user.branch_ids.ids)]</field>
-        </record>
+        </record> -->
 
          <record model="ir.rule" id="stock_move_branch_rule">
              <field name="name">stock_move multi-branch</field>
             <field name="model_id" search="[('model','=','stock.move')]" model="ir.model"/>
-            <field name="domain_force">['|',('branch_id','=',False),('branch_id', 'in', user.branch_ids.ids)]</field>
+            <field name="domain_force">['|',('branch_id','=',False),('branch_location_ids', 'in', user.branch_ids.ids)]</field>
          </record>
 
          <record model="ir.rule" id="stock_move_line_branch_rule">
             <field name="name">stock_move_line multi-branch</field>
             <field name="model_id" search="[('model','=','stock.move.line')]" model="ir.model"/>
-            <field name="domain_force">['|',('branch_id','=',False),('branch_id', 'in', user.branch_ids.ids)]</field>
+            <field name="domain_force">['|',('branch_id','=',False),('branch_location_ids', 'in', user.branch_ids.ids)]</field>
          </record>
 
         <record model="ir.rule" id="stock_valuation_layer_branch_rule">

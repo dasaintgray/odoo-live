@@ -34,6 +34,11 @@ class BranchStockMove(models.Model):
 
     branch_id = fields.Many2one('res.branch', readonly=True, store=True,
                                 related='picking_id.branch_id')
+    branch_location_ids = fields.Many2many("res.branch", string='Branch IDs',compute="_compute_location_branch",store=True)
+    @api.depends('location_id', 'location_dest_id')
+    def _compute_location_branch(self):
+        warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','=',self.location_id.id),('lot_stock_id','=',self.location_dest_id.id)]).branch_id.ids
+        self.branch_location_ids = warehouse_branches
 
 
 class BranchStockMoveLine(models.Model):
@@ -42,8 +47,12 @@ class BranchStockMoveLine(models.Model):
 
     branch_id = fields.Many2one('res.branch', readonly=True, store=True,
                                 related='move_id.branch_id')
+    branch_location_ids = fields.Many2many("res.branch", string='Branch IDs',compute="_compute_location_branch",store=True)
 
-
+    @api.depends('location_id', 'location_dest_id')
+    def _compute_location_branch(self):
+        warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','=',self.location_id.id),('lot_stock_id','=',self.location_dest_id.id)]).branch_id.ids
+        self.branch_location_ids = warehouse_branches
 class BranchStockValuationLayer(models.Model):
     """Inherited Stock Valuation Layer"""
     _inherit = 'stock.valuation.layer'

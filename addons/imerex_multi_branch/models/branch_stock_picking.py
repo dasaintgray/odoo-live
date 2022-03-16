@@ -16,8 +16,9 @@ class StockPicking(models.Model):
                                 readonly=False,
                                 compute="_compute_branch",
                                 domain=_get_branch_id
-                                )
-    
+                                ) 
+    branch_location_ids = fields.Many2many("res.branch", string='Branch IDs',compute="_compute_location_branch",store=True)
+
     @api.onchange('picking_type_id')
     def change_location_dest_id(self):
         if self.picking_type_id.code == 'internal':
@@ -50,6 +51,11 @@ class StockPicking(models.Model):
         else:
             domain_return = ['&',('company_id','=', company),('usage', '=','internal')]
         return {'domain': {'location_dest_id': domain_return}}
+
+    @api.depends('location_id', 'location_dest_id')
+    def _compute_location_branch(self):
+        warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','=',self.location_id.id),('lot_stock_id','=',self.location_dest_id.id)]).branch_id.ids
+        self.branch_location_ids = warehouse_branches
 
     @api.depends('sale_id', 'purchase_id')
     def _compute_branch(self):

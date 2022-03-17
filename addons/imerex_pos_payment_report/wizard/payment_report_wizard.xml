@@ -35,4 +35,5 @@
     </record>
 
     <menuitem id="imerex_pos_payment_report_wizard_menuitem" action="imerex_pos_payment_report_wizard_action" parent="point_of_sale.menu_point_rep" groups="imerex_pos_payment_report.imerex_pos_payment_report_group" sequence="99" />
+    <menuitem id="imerex_pos_payment_report_wizard_menuitem2" action="imerex_pos_payment_report_wizard_action" parent="point_of_sale.menu_point_root" groups="imerex_pos_payment_report.imerex_pos_payment_report_group" sequence="99" />
 </odoo>

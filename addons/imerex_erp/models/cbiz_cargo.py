@@ -105,6 +105,7 @@ class cBizCargoJWT(models.Model):
         """For running only with emergency"""
         orders = self.env['sale.order'].search([("state","=",'draft')])
         for order in orders:
+            order.action_confirm
             if order.picking_ids: 
                 for picking in self.picking_ids:
                     picking.action_assign()

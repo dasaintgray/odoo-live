@@ -25,8 +25,8 @@ class SaleOrder(models.Model):
         date_order_utc = date_order.astimezone(pytz.timezone('UTC'))
         #bring the converted value back to the dict with key date_order
         invoice_vals['invoice_date'] = fields.Datetime.to_string(date_order_utc)
-        
         invoice_vals['ref'] = self.name
+        
         return invoice_vals
     
     def _prepare_confirmation_values(self):

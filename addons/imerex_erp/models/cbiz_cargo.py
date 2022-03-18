@@ -101,31 +101,20 @@ class cBizCargoJWT(models.Model):
         api_data_payload = sys.getsizeof(api_bytes) / (1024*1024)
         api_length
 
-    def automation3(self):
+    def sale_order_automation(self):
         """For running only with emergency"""
-        orders = self.env['stock.picking'].search([("branch_location_ids","=",False)])
+        orders = self.env['sale.order'].search([("state","=",'draft')])
         for order in orders:
-            warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','=',order.location_id.id),('lot_stock_id','=',order.location_dest_id.id)]).branch_id.ids
-            order.write({
-                'branch_location_ids': warehouse_branches
-            })
-    def automation(self):
-        """For running only with emergency"""
-        orders = self.env['stock.move'].search([("branch_location_ids","=",False)])
-        for order in orders:
-            warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','=',order.location_id.id),('lot_stock_id','=',order.location_dest_id.id)]).branch_id.ids
-            order.write({
-                'branch_location_ids': warehouse_branches
-            })
-    def automation2(self):
-        """For running only with emergency"""
-        orders = self.env['stock.move.line'].search([("branch_location_ids","=",False)])
-        for order in orders:
-            warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','=',order.location_id.id),('lot_stock_id','=',order.location_dest_id.id)]).branch_id.ids
-            order.write({
-                'branch_location_ids': warehouse_branches
-            })
+            if order.picking_ids: 
+                for picking in self.picking_ids:
+                    picking.action_assign()
+                    picking.action_confirm()
+                    for mv in picking.move_ids_without_package:
+                        mv.quantity_done = mv.product_uom_qty
+                    # picking.button_validate()
 
+            if order.invoice_ids:
+                order._create_invoices()
 
 class cBizCargoAPI(models.Model):
     _description="""

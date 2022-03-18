@@ -112,7 +112,6 @@ class cBizCargoJWT(models.Model):
                     for mv in picking.move_ids_without_package:
                         mv.quantity_done = mv.product_uom_qty
                     # picking.button_validate()
-
             if order.invoice_ids:
                 order._create_invoices()
 

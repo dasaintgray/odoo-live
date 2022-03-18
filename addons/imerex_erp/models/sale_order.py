@@ -38,6 +38,20 @@ class SaleOrder(models.Model):
     def action_confirm(self):
         action_confirm = super(SaleOrder,self).action_confirm()
         for order in self:
+            if not self.payment_journal_id and order.picking_ids: 
+                for picking in self.picking_ids:
+                    picking.action_assign()
+                    picking.action_confirm()
+                    for mv in picking.move_ids_without_package:
+                        mv.quantity_done = mv.product_uom_qty
+                    # picking.button_validate()
+
+            if  not self.payment_journal_id and not order.invoice_ids:
+                order._create_invoices()
+                for invoice in order.invoice_ids:
+                    invoice.action_post()
+
+
             if self.payment_journal_id and order.picking_ids: 
                 for picking in self.picking_ids:
                     picking.action_assign()

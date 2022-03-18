@@ -105,16 +105,7 @@ class cBizCargoJWT(models.Model):
         """For running only with emergency"""
         orders = self.env['sale.order'].search([("state","=",'draft')])
         for order in orders:
-            order.action_confirm
-            if order.picking_ids: 
-                for picking in self.picking_ids:
-                    picking.action_assign()
-                    picking.action_confirm()
-                    for mv in picking.move_ids_without_package:
-                        mv.quantity_done = mv.product_uom_qty
-                    # picking.button_validate()
-            if order.invoice_ids:
-                order._create_invoices()
+            order.action_confirm()
 
 class cBizCargoAPI(models.Model):
     _description="""

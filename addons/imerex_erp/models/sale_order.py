@@ -26,7 +26,7 @@ class SaleOrder(models.Model):
         #bring the converted value back to the dict with key date_order
         invoice_vals['invoice_date'] = fields.Datetime.to_string(date_order_utc)
         invoice_vals['ref'] = self.name
-        
+
         return invoice_vals
     
     def _prepare_confirmation_values(self):
@@ -48,9 +48,6 @@ class SaleOrder(models.Model):
 
             if  not self.payment_journal_id and not order.invoice_ids:
                 order._create_invoices()
-                for invoice in order.invoice_ids:
-                    invoice.action_post()
-
 
             if self.payment_journal_id and order.picking_ids: 
                 for picking in self.picking_ids:

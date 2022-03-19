@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <template id="branch_external_layout" inherit_id="web.external_layout">
+ <template id="branch_external_layout" inherit_id="web.external_layout">
 
         <xpath expr="//t[@t-if='company.external_report_layout_id']" position="before">
             <t t-if="branch_id">
@@ -16,7 +16,7 @@
 
     </template>
 
-    <template id="branch_external_layout_background" inherit_id="web.external_layout_background">
+        <template id="branch_external_layout_background" inherit_id="web.external_layout_background">
         <xpath expr="//div[hasclass('float-left')]" position="replace">
             <t t-if="branch">
                 <t t-if="branch.street or branch.street2 or branch.city or branch.state_id or branch.zip or branch.country_id">
@@ -25,12 +25,24 @@
                         <strong t-field="branch.receipt_name"/>
                         <strong t-field="branch.receipt_branchname"/>
                     </div>
-                    <div class="float-left company_address" t-if="branch.street" t-field="branch.street"><br/></div>
-                    <div class="float-left company_address" t-if="branch.street2" t-field="branch.street2"><br/></div>
-                    <div class="float-left company_address" t-if="branch.city" t-field="branch.city"><br/></div>
-                    <div class="float-left company_address" t-if="branch.zip" t-field="branch.zip"><br/></div>
-                    <div class="float-left company_address" t-if="branch.state_id" t-field="branch.state_id"><br/></div>
+                    <t t-if="branch.street">
+                    <div class="float-left company_address" t-field="branch.street"><br/></div>
+                    </t>
+                    <t t-if="branch.street2" >
+                    <div class="float-left company_address" t-field="branch.street2"><br/></div>
+                    </t>
+                    <t t-if="branch.city">
+                    <div class="float-left company_address"  t-field="branch.city"><br/></div>
+                    </t>
+                    <t t-if="branch.zip">
+                    <div class="float-left company_address" t-field="branch.zip"><br/></div>
+                    </t>
+                    <t t-if="branch.state_id">
+                    <div class="float-left company_address" t-field="branch.state_id"><br/></div>
+                    </t>
+                    <t t-if="branch.country_id">
                     <div class="float-left company_address" t-if="branch.country_id" t-field="branch.country_id"/>
+                    </t>
                 </div>
                 </t>
                 <t t-else="else">
@@ -90,14 +102,26 @@
         <xpath expr="//span[hasclass('company_address')]" position="replace">
             <t t-if="branch">
                 <t t-if="branch.street or branch.street2 or branch.city or branch.state_id or branch.zip or branch.country_id">
-                <span class="company_address" t-field="company.partner_id">,</span>
-                <span class="company_address" t-field="branch.name"><br/></span>
-                <span t-if="branch.street" t-field="branch.street"><br/></span>
-                <span t-if="branch.street2" t-field="branch.street2"><br/></span>
-                <span t-if="branch.city" t-field="branch.city">,</span>
-                <span t-if="branch.zip" t-field="branch.zip"><br/></span>
-                <span t-if="branch.state_id" t-field="branch.state_id"><br/></span>
-                <span t-if="branch.country_id" t-field="branch.country_id"/>
+                    <span class="company_address" t-field="branch.receipt_name">,</span><br/>
+                    <span class="company_address" t-field="branch.receipt_branchname"/><br/>
+                    <t t-if="branch.street">
+                        <span t-field="branch.street"/><br/>
+                    </t>
+                    <t t-if="branch.street2" >
+                        <span t-field="branch.street2"/><br/>
+                    </t>
+                    <t t-if="branch.city">
+                        <span t-field="branch.city"/>,<br/>
+                    </t>
+                    <t t-if="branch.zip">
+                        <span t-field="branch.zip"/><br/>
+                    </t>
+                    <t t-if="branch.state_id">
+                        <span t-field="branch.state_id"/><br/>
+                    </t>
+                    <t t-if="branch.country_id">
+                        <span t-if="branch.country_id" t-field="branch.country_id"/>
+                    </t>
                 </t>
                 <t t-else="else">
                 <div name="company_address" class="float-right mb4">
@@ -214,14 +238,26 @@
             <t t-if="branch">
                 <t t-if="branch.street or branch.street2 or branch.city or branch.state_id or branch.zip or branch.country_id">
                 <div class="col-6" name="company_address">
-                <span class="company_address" t-field="company.partner_id"/>,
-                <span class="company_address" t-field="branch.name"/><br/>
-                <span t-if="branch.street" t-field="branch.street"/><br/>
-                <span t-if="branch.street2" t-field="branch.street2"/><br/>
-                <span t-if="branch.city" t-field="branch.city"/>,
-                <span t-if="branch.zip" t-field="branch.zip"/><br/>
-                <span t-if="branch.state_id" t-field="branch.state_id"/><br/>
-                <span t-if="branch.country_id" t-field="branch.country_id"/>
+                    <span class="company_address" t-field="branch.receipt_name">,</span><br/>
+                    <span class="company_address" t-field="branch.receipt_branchname"/><br/>
+                    <t t-if="branch.street">
+                        <span t-field="branch.street"/><br/>
+                    </t>
+                    <t t-if="branch.street2" >
+                        <span t-field="branch.street2"/><br/>
+                    </t>
+                    <t t-if="branch.city">
+                        <span t-field="branch.city"/>,<br/>
+                    </t>
+                    <t t-if="branch.zip">
+                        <span t-field="branch.zip"/><br/>
+                    </t>
+                    <t t-if="branch.state_id">
+                        <span t-field="branch.state_id"/><br/>
+                    </t>
+                    <t t-if="branch.country_id">
+                        <span t-if="branch.country_id" t-field="branch.country_id"/>
+                    </t>
                 </div>
                 </t>
                 <t t-else="else">

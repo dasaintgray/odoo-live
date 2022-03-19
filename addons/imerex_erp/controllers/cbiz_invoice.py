@@ -3,7 +3,8 @@ from odoo import _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
 from odoo.exceptions import ValidationError
-
+from odoo.http import request, content_disposition
+from odoo import http, _
 class cBizInvoiceService(Component):
     _inherit = "base.rest.service"
     _name = "cbiz.invoice.service"
@@ -44,3 +45,18 @@ class cBizInvoiceService(Component):
             "name": {},
             "error": {}
         }
+
+class PublicInvoice(http.Controller):
+    _description="""Public Invoice Download"""
+
+    @http.route(['/invoicedownload/<string:reference>'], type='http', auth="public", website=True)
+    def download_pdf(self, reference):
+        invoice = request.env['account.move'].sudo().search([('ref', '=', reference)], limit=1)
+        if not invoice:
+            return None
+        pdf, _ = request.env['ir.actions.report']._get_report_from_name(
+            'account.report_invoice').sudo()._render_qweb_pdf(
+            [int(invoice.id)])
+        pdf_http_headers = [('Content-Type', 'application/pdf'), ('Content-Length', len(pdf)),
+                            ('Content-Disposition', content_disposition('%s - Invoice.pdf' % (invoice.ref)))]
+        return request.make_response(pdf, headers=pdf_http_headers)

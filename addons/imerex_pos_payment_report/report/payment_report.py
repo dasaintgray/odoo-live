@@ -441,8 +441,8 @@ class PaymentReport(models.AbstractModel):
 
             #Get the initial and end date of the range of stock_move_line
             if stock_move_line.ids:
-                initial_date = self.env['stock.move.line'].browse(min(stock_move_line.ids)).date
-                end_date = self.env['stock.move.line'].browse(max(stock_move_line.ids)).date
+                initial_date = date_start
+                end_date = date_stop
 
                 #Get all products that are available in the POS
                 all_pos_products = self.env['product.product'].search([('available_in_pos','=',True),('is_combo','=',False)]).ids
@@ -474,7 +474,7 @@ class PaymentReport(models.AbstractModel):
                             'begin_qty': begin_qty,
                             'qty_sold': qty_sold,
                             'end_qty': end_qty,
-                            'other_movements': other_movements 
+                            'other_movements': abs(other_movements)
                         }
                     })
                 

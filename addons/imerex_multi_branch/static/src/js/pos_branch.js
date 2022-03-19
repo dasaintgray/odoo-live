@@ -3,7 +3,10 @@ odoo.define('imerex_multi_branch.branch', function(require){
     const OrderReceipt = require('point_of_sale.OrderReceipt');
     const Registries = require('point_of_sale.Registries');
     var models = require('point_of_sale.models');
+
     models.load_fields("pos.config", "branch_id");
+    models.load_fields("pos.payment.method","pos_name")
+
     models.load_models({
         model: 'res.branch',
         fields: ['id','name','receipt_name','receipt_branchname','ksa_address', 'street', 'street2','city','state_id','country_id','email','phone','website','twitter','facebook','mobile','whatsapp'],
@@ -14,6 +17,16 @@ odoo.define('imerex_multi_branch.branch', function(require){
             }
         },
     });
+
+    let _super_paymentline = models.Paymentline.prototype;
+    models.Paymentline = models.Paymentline.extend({
+        initialize:function(attributes, options){
+        _super_paymentline.initialize.call(this,attributes,options);
+        this.name = this.payment_method.pos_name
+        this.pos_name = this.payment_method.pos_name
+    },
+    })
+
     const BranchOrderReceipt = OrderReceipt =>
         class extends OrderReceipt {
             get receiptEnv() {
@@ -37,3 +50,4 @@ odoo.define('imerex_multi_branch.branch', function(require){
     Registries.Component.extend(OrderReceipt, BranchOrderReceipt);
     return OrderReceipt;
 })
+

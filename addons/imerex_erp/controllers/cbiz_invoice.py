@@ -55,7 +55,7 @@ class PublicInvoice(http.Controller):
         if not invoice:
             return None
         pdf, _ = request.env['ir.actions.report']._get_report_from_name(
-            'account.report_invoice').sudo()._render_qweb_pdf(
+            'account.report_invoice_with_payments').sudo()._render_qweb_pdf(
             [int(invoice.id)])
         pdf_http_headers = [('Content-Type', 'application/pdf'), ('Content-Length', len(pdf)),
                             ('Content-Disposition', content_disposition('%s - Invoice.pdf' % (invoice.ref)))]

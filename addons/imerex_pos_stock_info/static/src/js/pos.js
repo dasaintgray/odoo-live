@@ -17,7 +17,6 @@ odoo.define('imerex_pos_stock_info.pos', function (require) {
         loaded: function (self, all_on_hand_qty) {
             _.each(all_on_hand_qty, function (product) {
                 self.db.on_hand_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0,product['qty_available'], product['virtual_available']]
-                console.log(self.env.pos)
             })
         }
     })

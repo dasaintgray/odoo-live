@@ -23,7 +23,10 @@ class StockPicking(models.Model):
     def change_location_dest_id(self):
         if self.picking_type_id.code == 'internal':
             warehouse = self.env['stock.warehouse'].search([('branch_id','=',self.env.user.branch_ids.ids),('branch_id','!=',self.branch_id.id)]).lot_stock_id
-            self.picking_type_id.default_location_dest_id = warehouse[0]
+            if len(warehouse) > 1:
+                self.picking_type_id.default_location_dest_id = warehouse[0]
+            else:
+                self.picking_type_id.default_location_dest_id = warehouse
 
     @api.onchange('picking_type_id')
     def domain_location_id(self):

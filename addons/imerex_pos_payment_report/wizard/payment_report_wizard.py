@@ -9,7 +9,7 @@ from io import BytesIO
 import pytz
 from datetime import datetime, timedelta
 from odoo.tools.misc import DEFAULT_SERVER_DATETIME_FORMAT
-
+import dateutil.parser
 
 class PosInvoicePaymentReportXls(models.Model):
     _name = 'pos.invioce.payment.report.xls'
@@ -43,10 +43,29 @@ class ShPaymentPosReportWizard(models.TransientModel):
             GROUP BY config_id
         """, (config_ids,))
         dates_yesterday = [res['start'] for res in self.env.cr.dictfetchall()]
-        return dates_yesterday and min(dates_yesterday) or fields.Datetime.now()
+        date_start = False
+        if dates_yesterday:
+            #get the oldest date
+            date_min = min(dates_yesterday)
+            #localize and stringify the UTC DB oldest date
+            date_min_unstrip = fields.Datetime.to_string(date_min.astimezone(pytz.timezone(self.env.context.get('tz'))))
+            #remove the time on date
+            date_min_splitted = date_min_unstrip.split(" ")
+            #return datetime from string as 00:00:00
+            date_min_no_time = fields.Datetime.from_string(date_min_splitted[0])
+
+            #convert from local to utc as Odoo framework stores date in UTC for easy conversion
+            user_tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
+            #convert string to datetime format for local time
+            date_local = user_tz.localize(date_min_no_time)
+            #bring back to UTC
+            date_utc = date_local.astimezone(pytz.timezone('UTC'))
+            date_start = fields.Datetime.to_string(date_utc)
+            return date_start or fields.Datetime.now()
     
     def _default_end_date(self):
-        date_end = self._default_start_date() + timedelta(days = 1)
+        #date_end = self._default_start_date() + timedelta(days = 1)
+        date_end = fields.Datetime.now() + timedelta(minutes = 5)
         return date_end
 
     @api.model

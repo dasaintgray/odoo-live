@@ -18,11 +18,11 @@ class SaleOrder(models.Model):
     def _prepare_invoice(self):
         invoice_vals = super(SaleOrder, self)._prepare_invoice()
 
-        user_tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
+        user_tz = pytz.timezone('UTC')
         #convert string to datetime format for local time
         date_order = user_tz.localize(self.date_order)
         #change timezone to UTC
-        date_order_utc = date_order.astimezone(pytz.timezone('UTC'))
+        date_order_utc = date_order.astimezone(pytz.timezone(self.env.context.get('tz')))
         #bring the converted value back to the dict with key date_order
         invoice_vals['invoice_date'] = fields.Datetime.to_string(date_order_utc)
         invoice_vals['ref'] = self.name

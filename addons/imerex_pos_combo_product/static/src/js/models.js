@@ -21,6 +21,7 @@ odoo.define('imerex_pos_combo_product.models', function (require) {
         model: 'product.product',
         fields: ['id', 'qty_available', 'virtual_available'],
         domain: [['available_in_pos', '=', true]],
+        context: function(self){ return { warehouse: self.picking_type.warehouse_id[0] }; },
         loaded: function (self, all_on_hand_qty) {
             _.each(all_on_hand_qty, function (product) {
                 self.db.combo_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0]

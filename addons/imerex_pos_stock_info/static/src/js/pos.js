@@ -7,17 +7,21 @@ odoo.define('imerex_pos_stock_info.pos', function (require) {
     const Registries = require("point_of_sale.Registries");
 
     models.load_fields('product.product', ["is_combo","type","sub_combo_product_line_ids"])
+    models.load_fields('stock.picking.type',['warehouse_id'])
 
     models.load_models({
         model: 'product.product',
         fields: ['id', 'qty_available', 'virtual_available'],
         domain: [['available_in_pos', '=', true]],
+        context: function(self){ return { warehouse: self.picking_type.warehouse_id[0] }; },
         loaded: function (self, all_on_hand_qty) {
             _.each(all_on_hand_qty, function (product) {
                 self.db.on_hand_qty[product['id']] = [product['qty_available'], product['virtual_available'],0,0,product['qty_available'], product['virtual_available']]
+                console.log(self.env.pos)
             })
         }
     })
+
     DB.include({
         init: function (options) {
             this._super(options);

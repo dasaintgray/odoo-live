@@ -11,7 +11,6 @@ odoo.define('imerex_multi_branch.branch', function(require){
         loaded: function (self, branch) {
             if (branch){
                 self.branch = branch[0]
-                console.log(self.branch);
             }
         },
     });

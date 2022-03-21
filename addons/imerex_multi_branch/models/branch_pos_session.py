@@ -13,6 +13,18 @@ class PosSession(models.Model):
 
     branch_id = fields.Many2one("res.branch", string='Branch')
 
+    def open_cashbox_pos(self):
+        if not self.statement_ids.cashbox_end_id.cashbox_lines_ids:
+            for value in [0.25,0.50,1.00,2.00,5,10,20,50,100,200,500]:
+                vals = {
+                    'cashbox_id': self.statement_ids.cashbox_end_id.id,
+                    'number': 0,
+                    'coin_value': value
+                }
+                cashbox_lines_ids = self.env['account.cashbox.line'].create(vals)
+        open_cashbox_pos_override = super(PosSession,self).open_cashbox_pos()
+        return open_cashbox_pos_override
+
     @api.model
     def create(self, values):
         #session creation add branch_id

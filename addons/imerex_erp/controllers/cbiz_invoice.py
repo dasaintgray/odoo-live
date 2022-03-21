@@ -49,7 +49,7 @@ class cBizInvoiceService(Component):
 class PublicInvoice(http.Controller):
     _description="""Public Invoice Download"""
 
-    @http.route(['/invoicedownload/<string:reference>'], type='http', auth="public", website=True)
+    @http.route(['/idl/<string:reference>'], type='http', auth="public", website=True)
     def download_pdf(self, reference):
         invoice = request.env['account.move'].sudo().search([('ref', '=', reference)], limit=1)
         if not invoice:

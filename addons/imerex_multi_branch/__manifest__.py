@@ -10,7 +10,7 @@
     'maintainer': "CircuitMindz",
     'website': "https://www.circuitmindz.com",
     'category': 'Tools',
-    'depends': ['sale_management',
+    'depends': ['sale_management','account',
                 'sale_stock', 'purchase_stock',
                 'stock_account','point_of_sale','stock'],
     'data': [

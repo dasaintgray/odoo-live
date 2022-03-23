@@ -101,11 +101,19 @@ class cBizCargoJWT(models.Model):
         api_data_payload = sys.getsizeof(api_bytes) / (1024*1024)
         api_length
 
-    def sale_order_automation(self):
+    def sale_order_automation(self,branch_id):
         """For running only with emergency"""
-        orders = self.env['sale.order'].search([("state","=",'draft')])
+        orders = self.env['sale.order'].search([("state","=",'draft'),("branch_id","=",branch_id)])
         for order in orders:
             order.action_confirm()
+
+    def stock_move_automation(self):
+        pickings = self.env['stock.picking'].search([('state','=','assigned'),('company_id','=',2)])
+        for picking in pickings:
+            # picking.action_assign()
+            # picking.action_confirm()
+            for mv in picking.move_ids_without_package:
+                mv.quantity_done = mv.product_uom_qty
 
 class cBizCargoAPI(models.Model):
     _description="""

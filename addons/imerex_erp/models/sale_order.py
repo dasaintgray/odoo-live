@@ -37,8 +37,8 @@ class SaleOrder(models.Model):
                 for picking in self.picking_ids:
                     picking.action_assign()
                     picking.action_confirm()
-                    # picking.button_validate()
-
+                    for mv in picking.move_ids_without_package:
+                        mv.quantity_done = mv.product_uom_qty
             if  not self.payment_journal_id and not order.invoice_ids:
                 order._create_invoices()
 

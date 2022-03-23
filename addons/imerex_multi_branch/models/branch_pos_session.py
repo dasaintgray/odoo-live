@@ -14,15 +14,27 @@ class PosSession(models.Model):
     branch_id = fields.Many2one("res.branch", string='Branch')
 
     def open_cashbox_pos(self):
-        if not self.statement_ids.cashbox_end_id.cashbox_lines_ids:
-            for value in [0.25,0.50,1.00,2.00,5,10,20,50,100,200,500]:
-                vals = {
-                    'cashbox_id': self.statement_ids.cashbox_end_id.id,
-                    'number': 0,
-                    'coin_value': value
-                }
-                cashbox_lines_ids = self.env['account.cashbox.line'].create(vals)
-        open_cashbox_pos_override = super(PosSession,self).open_cashbox_pos()
+        if not self.cash_register_id.cashbox_end_id.cashbox_lines_ids:
+            if not self.cash_register_id.cashbox_end_id:
+                cashbox_id_values=[
+                    {
+                        'start_bank_stmt_ids': [],
+                        'end_bank_stmt_ids': [[4, self.cash_register_id.id,False]],
+                        'cashbox_lines_ids': [],
+                        'is_a_template': False
+                    }
+                ]
+                cashbox_id = self.cash_register_id.cashbox_end_id.create(cashbox_id_values)
+                self.cash_register_id.cashbox_end_id = cashbox_id
+            if self.cash_register_id.cashbox_end_id.id:
+                for value in [0.25,0.50,1.00,2.00,5,10,20,50,100,200,500]:
+                    vals = {
+                        'cashbox_id': self.cash_register_id.cashbox_end_id.id,
+                        'number': 0,
+                        'coin_value': value
+                    }
+                    cashbox_lines_ids = self.env['account.cashbox.line'].create(vals)
+        open_cashbox_pos_override = super(PosSession,self).open_cashbox_pos()        
         return open_cashbox_pos_override
 
     @api.model

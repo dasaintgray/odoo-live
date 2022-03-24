@@ -21,8 +21,7 @@ class cBizContactService(Component):
         """
         Get Contact Information
         """
-        image = self._http_image(_id)
-        values = self._return_contact_values(_id,image)
+        values = self._return_contact_values(_id)
         return values
 
     @restapi.method(
@@ -60,7 +59,7 @@ class cBizContactService(Component):
         
         #Check for shipper_id params in GET URL
         if shipper_id:
-            shipper_id_search = self.env["res.partner"].search([("shipper_id","in",shipper_id)]).ids
+            shipper_id_search = self.env["res.partner"].search([("shipper_id",'=',shipper_id)]).ids
             search_id = list(set(search_id)&set(shipper_id_search))
 
         #Check for type params in GET URL

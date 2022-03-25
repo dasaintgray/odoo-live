@@ -343,7 +343,8 @@ odoo.define('imerex_pos_combo_product.models', function (require) {
             let combo_amount_dict = {};
             if (this.is_combo_line) {
                 _.each(_.map(this.get_unrequire_product(), function(id){return self.pos.db.get_product_by_id(id)}), function(value){
-                    list_product_price.push(value.get_price(self.order.pricelist, self.get_quantity()))
+                    var listprice = self.price_extra * self.get_quantity()
+                    list_product_price.push(listprice)
                 })
                 let combo_data = _.map(self.select_combo_id, function(id){return self.pos.combo_products_by_id[id]});
                 _.each(combo_data, function(comboData){

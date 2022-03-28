@@ -1,4 +1,5 @@
 
+from http.client import OK
 from odoo import _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
@@ -15,7 +16,6 @@ class cBizInvoiceService(Component):
 
         Service used to search invoice references
     """
-
     @restapi.method(
         [(['/'], "GET")],
         input_param=restapi.CerberusValidator("_validator_search"),
@@ -32,6 +32,51 @@ class cBizInvoiceService(Component):
             "id": res.id,
             "name": res.name
         }
+        return return_value
+
+    @restapi.method(
+        [(['/creditnote/'], "POST")],
+        # input_param=restapi.CerberusValidator("_validator_creditnote"),
+        # output_param=restapi.CerberusValidator("_validator_creditnote_search")
+        )
+    def creditnote(self, params):
+        #Check required keys
+        for key in ['shipper_id','name','invoice_line_ids','cargo_branch_id']:
+            if key not in params:
+                raise ValidationError(_("'%s' required!"),key)
+
+        #Search for invoice with given HAWB in ref"
+        invoice = self.env['account.move'].search([('ref','=',params['name'])])
+        if not invoice:
+            raise ValidationError("You cannot create a credit note for a non-existing Invoice")
+
+        #Search for customer with given shipper_id
+        customer = self.env['res.partner'].search([('shipper_id','=',str(params['shipper_id']))])
+        if not customer:
+            raise ValidationError("No customer with the said 'shipper_id'")
+
+        #Search for branch_id with given cargo_branch_id
+        branch_id = self.env['res.branch'].search([('cargo_branch_id','=',params['cargo_branch_id'])]).id
+        if not branch_id:
+            raise ValidationError('No Branch with the given Cargo ID')
+
+        #Credit Note standard values initialization
+        values = {
+            "ref": "Reversal of: " + invoice.name + " - " + params["name"],
+            "move_type": "out_refund",
+            "partner_id": customer.id,
+            "invoice_date": params["invoice_date"],
+            "branch_id": branch_id
+        }
+
+        #Completing naming convention "Reversal of: invoice_name - hawb: reason"
+        if params["reason"]:
+            values["ref"] += ": " + params["reason"]
+        else:
+            values["ref"] += ": Due to revision in CircuitTrack Transaction"
+
+        #data processing done. pending works are _validators and credit note posting
+        return_value = [OK]
         return return_value
 
     def _validator_search(self):

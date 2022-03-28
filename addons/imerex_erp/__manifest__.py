@@ -9,7 +9,7 @@
     "author": "James Tecson, Circuit Minds I.T. Business Solutions",
     "website": "https://mrm.imerex.com.ph",
     "maintainer": "Circuit Minds I.T. Business Solutions",
-    "depends": ["contacts","sale","account","product","component","base_rest"],
+    "depends": ["contacts","sale","account","product","component","base_rest","account_reports"],
     "data": [
         "views/city.xml",
         "views/product_product.xml",
@@ -17,6 +17,7 @@
         "views/res_partner.xml",
         "views/sale_order.xml",
         "views/jwt_schedule.xml",
+        "views/account_report_trial_balance.xml",
         "security/ir.model.access.csv"
         ],
     "external_dependencies": {"python": ["jsondiff"]},

@@ -48,7 +48,7 @@ class cBizCargoJWT(models.Model):
         #check expiration
         expiration = self.search([]).expiration_Time
         timenow = datetime.now().timestamp()
-        if expiration < int(timenow):
+        if expiration < timenow:
             token = self.jwt_authenticate()
         else:
             token = self.search([])

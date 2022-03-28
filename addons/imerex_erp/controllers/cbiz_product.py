@@ -1,5 +1,4 @@
 
-from xml.dom import ValidationErr
 from odoo import fields, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
@@ -109,6 +108,85 @@ class cBizProductService(Component):
             return_value.append(details)
         return return_value
 
+    #ADD BY HENRY MEMPIN
+    #DATE: 28 MARCH 2022
+    #TIME: 14:08
+    #PURPOSE: For Mobile Consumer
+    ##################################################################################################################
+    @restapi.method(
+        [(['/mobile/'], "GET")],
+        input_param=restapi.CerberusValidator("_validator_qty")
+        )
+    def qty(self,cargo_branch_id = False,code=''):
+        """
+        Product QTY by Code and Branch ID
+        """
+        branch = self.env['res.branch'].search([('cargo_branch_id','=',cargo_branch_id)])
+        if not branch:
+            raise ValidationError("No Branch with given Cargo ID")
+        location = self.env['stock.warehouse'].search([('branch_id','=',branch.ids)]).view_location_id
+        quantity = self.env['stock.quant']
+        if code:
+            if ',' in code:
+                codes = code.split(',') 
+                search_ids = self.env['product.template'].search([("code","in",codes)]).ids
+            else:
+                search_ids = self.env['product.template'].search([("code","=",code)]).ids
+        else:
+            search_ids = self.env['product.template'].search([]).ids
+        if not search_ids:
+            raise ValidationError("No Product Found")
+        final_search = self.env['product.template'].search([("id","in",search_ids)])
+        return_value=[]
+
+        base_url = self.env['ir.config_parameter'].get_param('web.base.url')
+        for id in final_search.ids:
+            product = self.env['product.template'].browse(id)
+            qty_available = quantity._get_available_quantity(product, location)
+            image_url_512 = base_url + "/web/image/product.template/" + str(id) + "/image_512"
+            details = {}
+            details.update({
+                'id': product.id,
+                'code': product.code,
+                'name': product.display_name,
+                'qty': qty_available,
+                'sales_count': product.sales_count,
+                'price': product.list_price,
+                'branch': branch.receipt_branchname,
+                'image_url_512': image_url_512
+            })
+            return_value.append(details)
+        return return_value
+
+    #ADDED BY HENRY
+    #PURPOSE: PULL PRODUCT BY CODE
+    @restapi.method(
+        [(['/mobile-search'], "GET")],
+        input_param=restapi.CerberusValidator("_validator_search"),
+        )
+    def search(self,code=''):
+        """
+        Search Product by Code
+        """
+        search_ids = self.env['product.template'].search([]).ids
+        #if name:
+        #    search_ids = self.env['product.template'].search([("|"),("name","like",name),("default_code","=",name)]).ids
+        if code:
+            if ',' in code:
+                codes = code.split(',')
+                search_code = self.env['product.template'].search([("code","in",codes)]).ids
+            else:
+                search_code = self.env['product.template'].search([("code","=",code)]).ids
+            search_ids = list(set(search_code)&set(search_ids))
+        if not search_ids:
+            raise ValidationError("No Product Found")
+        final_search = self.env['product.template'].search([("id","=",search_ids)])
+        return_value = []
+        for id in final_search.ids:
+            return_value.append(self._return_product_result(id))
+        return return_value
+    ##################################################################################################################
+
     def _validator_qty(self):
         return {
             "cargo_branch_id": {"type": "string", "required": True},
@@ -131,7 +209,7 @@ class cBizProductService(Component):
             "name":{"type": "string"},
             "description": {"type":"string"},
             "qty": {"type":"float"},
-            "image": {"type":"string"}
+            "image": {"type":"string"},
         }
 
     def _validator_search(self):
@@ -164,3 +242,21 @@ class cBizProductService(Component):
             image_string = ''
         return image_string
 
+
+    #ADDED BY: HENRY V. MEMPIN
+    #DATE: 28 MARCH 2022
+    ####################################################################
+    def _return_product_result(self,id):
+        product = self.env['product.template'].browse(id)
+        base_url = self.env['ir.config_parameter'].get_param('web.base.url')
+        image_url_128 = base_url + "/web/image/product.template/" + str(id) + "/image_128"
+        image_url_256 = base_url + "/web/image/product.template/" + str(id) + "/image_256"
+        return {
+            "id": product.id,
+            "code": product.code or '',
+            "name": product.display_name,
+            "description": product.description_sale or '',
+            "image_128": image_url_128,
+            "image_256": image_url_256
+        }
+    ####################################################################

@@ -92,16 +92,14 @@ class AccountChartOfAccountReport(models.AbstractModel):
                     account_sum.get('credit', 0.0) - account_init_bal.get('credit', 0.0),
                 ]
                 sums += [
-                    account_sum.get('debit', 0.0) - account_init_bal.get('debit', 0.0) + sums[0],
-                    account_sum.get('credit', 0.0) - account_init_bal.get('credit', 0.0) + sums[1],
+                    sums[2] + sums[0],
+                    sums[3] + sums[1],
                 ]
                 account_balance += sums[-4] - sums[-3]
 
             # Append the totals.
             sums += [
                 account_balance or 0.0
-                # account_balance > 0 and account_balance or 0.0,
-                # account_balance < 0 and -account_balance or 0.0,
             ]
 
             # account.account report line.
@@ -138,4 +136,4 @@ class AccountChartOfAccountReport(models.AbstractModel):
 
     @api.model
     def _get_report_name(self):
-        return _("Trial Balance")
+        return _("Trial Balance with Net Movement")

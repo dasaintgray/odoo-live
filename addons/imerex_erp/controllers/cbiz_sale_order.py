@@ -65,10 +65,15 @@ class cBizSaleOrderService(Component):
 
         #loop if multiple invoices
         for invoice in sale_order.invoice_ids:
+            #Sum of payments created in all invoices
             existing_payment_amount += invoice.amount_total - invoice.amount_residual
+
+            #Variable will be used to compare cancelled invoice payments and created new invoices
             existing_invoices.append(invoice.name)
+
             #If invoice not reversed, proceed with refund and credit note return payment
             if invoice.payment_state != 'reversed':
+                #Use the refund wizard existing in Odoo ORM
                 refund_wizard = self.env['account.move.reversal'].with_context(active_model="account.move", active_ids=invoice.id).create({
                     'reason': params['name'] + ': Edited by CircuitTrack',
                     'refund_method': 'refund' if invoice.payment_state in ['paid','in_payment'] else 'cancel',
@@ -85,8 +90,8 @@ class cBizSaleOrderService(Component):
 
                     #Create a payment in Credit Note
                     credit_note_payment = invoice.env['account.payment.register'].with_context({
-                        "active_model":"account.move",
-                        "active_ids":credit_note.id
+                        "active_model": "account.move",
+                        "active_ids": credit_note.id
                     }).create([{
                         "payment_date": date_order,
                         "amount": invoice.amount_total,
@@ -102,13 +107,13 @@ class cBizSaleOrderService(Component):
             #Log a note in the cancelled invoice
             invoice.message_post(body=log_note)
 
-        #Log a note in the cancelled Sale Order    
-        sale_order.message_post(body=log_note)
-
         #Cancel previous invoice to create new amended invoice
         sale_order.action_cancel()
 
-        #Rename previous invoice to avoid unique_constraints
+        #Log a note in the cancelled Sale Order    
+        sale_order.message_post(body=log_note)
+
+        #Rename previous sale order to avoid unique_constraints
         sale_order_ids = self.env['sale.order'].search([('name','like',params['name'] + '-cancelled')])
         cancel_count = len(sale_order_ids)
         appended = '-cancelled-' + str(cancel_count) if cancel_count > 0 else '-cancelled'
@@ -129,19 +134,28 @@ class cBizSaleOrderService(Component):
 
             #Get the changes on payment amount
             params['payment_amount'] -= existing_payment_amount
+
             #Check if payment_amount has been reduced compared to previous
             if params['payment_amount'] < 0:
                 raise ValidationError("Payment Amount cannot be reduced!")
+
             #Commit and save all the code run progress before creating Sales Order to avoid unique constraints
             sale_order.env.cr.commit()
+
+            #Create New Sale Order
             revised_sale_order_return = self._create_sale_order(params)
+
+            #Assign Outstanding payment from previous invoices to the newly created invoices in the sales order
             revised_sale_order = self.env['sale.order'].browse(revised_sale_order_return['id'])
             for invoice in revised_sale_order.invoice_ids:
+
+                #Convert the JSON Value from the payment widget(invoice_outstanding_credits_debits_widget) to confirm outstanding payment to new invoice
                 pending_payments = json.loads(invoice.invoice_outstanding_credits_debits_widget)
                 if pending_payments['content']:
                     for i in pending_payments['content']:
                         if i['journal_name'] in existing_invoices:
                             invoice.js_assign_outstanding_line(i['id'])
+
             return revised_sale_order_return
         return {"void": True}
 

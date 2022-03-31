@@ -1,11 +1,12 @@
 
+from optparse import Values
 import pytz
 from datetime import tzinfo
 from odoo import fields, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
 from odoo.exceptions import ValidationError
-
+import json
 class cBizSaleOrderService(Component):
     _inherit = "base.rest.service"
     _name = "cbiz.sale.order.service"
@@ -26,8 +27,123 @@ class cBizSaleOrderService(Component):
         """
         Create Sales Order
         """
+        for key in ['name','order_line']:
+            if key not in params:
+                raise ValidationError(_("%s is required!",key))
         created_sale_order = self._create_sale_order(params)
         return created_sale_order
+
+    @restapi.method(
+        [(['/amendments/'], "POST")],
+        input_param=restapi.CerberusValidator("_validator_amendments"),
+        output_param=restapi.CerberusValidator("_validator_return_amendments")
+        )
+    def amendments(self, **params):
+        #Check for required Keys
+        for key in ['name','date_order']:
+            if key not in params:
+                raise ValidationError(_("%s is required!",key))
+        
+        #Search for invoice with given HAWB in ref"
+        sale_order = self.env['sale.order'].search([('name','=',params['name'])])
+
+        #Check invoice within Sales Order
+        if not sale_order:
+            raise ValidationError("No Sale Order with given name")
+        elif sale_order.state != 'sale':
+            raise ValidationError("This item is not posted")
+        elif not sale_order.invoice_ids:
+            raise ValidationError("You cannot create a credit note for a non-existing Invoice")
+
+        #Convert Local Time to UTC Time for Postgresql Saving
+        date_order = self._time_store(params['date_order'])
+
+        #initialize variables
+        log_note = "Cancelled by CircuitTrack due to Transaction Edit"
+        existing_payment_amount = 0
+        existing_invoices = []
+
+        #loop if multiple invoices
+        for invoice in sale_order.invoice_ids:
+            existing_payment_amount += invoice.amount_total - invoice.amount_residual
+            existing_invoices.append(invoice.name)
+            #If invoice not reversed, proceed with refund and credit note return payment
+            if invoice.payment_state != 'reversed':
+                refund_wizard = self.env['account.move.reversal'].with_context(active_model="account.move", active_ids=invoice.id).create({
+                    'reason': params['name'] + ': Edited by CircuitTrack',
+                    'refund_method': 'refund' if invoice.payment_state in ['paid','in_payment'] else 'cancel',
+                    'date_mode': 'custom',
+                    'date': date_order
+                })
+                refund_wizard.reverse_moves()
+
+                if invoice.payment_state != 'reversed':
+                    #Post Credit Note
+                    credit_note = refund_wizard.new_move_ids
+                    credit_note.write({'invoice_date': date_order})
+                    credit_note.action_post()
+
+                    #Create a payment in Credit Note
+                    credit_note_payment = invoice.env['account.payment.register'].with_context({
+                        "active_model":"account.move",
+                        "active_ids":credit_note.id
+                    }).create([{
+                        "payment_date": date_order,
+                        "amount": invoice.amount_total,
+                        "journal_id": sale_order.payment_journal_id.id,
+                        "payment_method_id": 1,
+                        "company_id": sale_order.company_id.id
+                    }])
+                    credit_note_payment.action_create_payments()
+
+                    #Log a note in the cancelled invoice
+                    log_note += " - Reverse Entry: " + credit_note.name
+
+            #Log a note in the cancelled invoice
+            invoice.message_post(body=log_note)
+
+        #Log a note in the cancelled Sale Order    
+        sale_order.message_post(body=log_note)
+
+        #Cancel previous invoice to create new amended invoice
+        sale_order.action_cancel()
+
+        #Rename previous invoice to avoid unique_constraints
+        sale_order_ids = self.env['sale.order'].search([('name','like',params['name'] + '-cancelled')])
+        cancel_count = len(sale_order_ids)
+        appended = '-cancelled-' + str(cancel_count) if cancel_count > 0 else '-cancelled'
+        sale_order.sudo().write({"name": params['name'] + appended})
+
+        #Create the revised  Sales Order and Invoice if no void or void=True
+        if 'void' not in params:
+            params['void'] = False
+
+        if params['void'] != True:
+            #Check for required Keys
+            for key in ['payment_amount']:
+                if key not in params:
+                    raise ValidationError(_("%s is required with {void = False}",key))
+            
+            #delete void params as it is not needed in _create_sale_order function
+            params.pop('void')
+
+            #Get the changes on payment amount
+            params['payment_amount'] -= existing_payment_amount
+            #Check if payment_amount has been reduced compared to previous
+            if params['payment_amount'] < 0:
+                raise ValidationError("Payment Amount cannot be reduced!")
+            #Commit and save all the code run progress before creating Sales Order to avoid unique constraints
+            sale_order.env.cr.commit()
+            revised_sale_order_return = self._create_sale_order(params)
+            revised_sale_order = self.env['sale.order'].browse(revised_sale_order_return['id'])
+            for invoice in revised_sale_order.invoice_ids:
+                pending_payments = json.loads(invoice.invoice_outstanding_credits_debits_widget)
+                if pending_payments['content']:
+                    for i in pending_payments['content']:
+                        if i['journal_name'] in existing_invoices:
+                            invoice.js_assign_outstanding_line(i['id'])
+            return revised_sale_order_return
+        return {"void": True}
 
     def _create_sale_order(self,values):
         #check shipper_id to sync with CircuitTrack
@@ -37,8 +153,6 @@ class cBizSaleOrderService(Component):
             if values['shipper_id']:
                 created_partner = self.env['cbiz.api.cargoapi'].cargo_sync_shipper(values['shipper_id'])
                 values['partner_id'] = created_partner.id
-                # values['partner_invoice_id'] = created_partner.id
-                # values['partner_shipping_id'] = created_partner.id
 
         #use cargo_branch_id to search for branch_id which is required by sale order
         if 'cargo_branch_id' in values:
@@ -64,14 +178,8 @@ class cBizSaleOrderService(Component):
         sale_order_fields = self._sale_order_fields()
         sale_order_values={}
 
-        #convert from local to utc as Odoo framework stores date in UTC for easy conversion
-        user_tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
-        #convert string to datetime format for local time
-        date_order = user_tz.localize(fields.Datetime.from_string(values['date_order']))
-        #change timezone to UTC
-        date_order_utc = date_order.astimezone(pytz.timezone('UTC'))
-        #bring the converted value back to the dict with key date_order
-        values['date_order'] = fields.Datetime.to_string(date_order_utc)
+        #convert from local TZ to UTC
+        values['date_order'] = self._time_store(values['date_order'])
 
         #serialize order fields except for order_line
         for order_data in sale_order_fields:
@@ -132,11 +240,18 @@ class cBizSaleOrderService(Component):
             "client_order_ref": {"type": "string"},
             "order_line": {
                 "type": "list",
-                "required": True,
                 "schema": {"type": "dict", "schema": schema},
             },
         }
         return res
+
+    def _validator_amendments(self):
+        res = self._validator_create()
+        res.update({
+            "void": {"type": "boolean"}
+        })
+        return res
+
 
     def _validator_return_create(self):
         res = {
@@ -144,6 +259,13 @@ class cBizSaleOrderService(Component):
             "name": {"type": "string"},
             "invoice_id": {"type": "integer"},
         }
+        return res
+
+    def _validator_return_amendments(self):
+        res = self._validator_return_create()
+        res.update({
+            "void": {"type": "boolean"}
+        })
         return res
 
     def _sale_order_fields(self):
@@ -159,6 +281,16 @@ class cBizSaleOrderService(Component):
             "order_line",
             ]
         return cbiz_fields
+
+    def _time_store(self, order_date):
+        #convert from local to utc as Odoo framework stores date in UTC for easy conversion
+        user_tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
+        #convert string to datetime format for local time
+        date_order = user_tz.localize(fields.Datetime.from_string(order_date))
+        #change timezone to UTC
+        date_order_utc = date_order.astimezone(pytz.timezone('UTC'))
+        #bring the converted value back to the dict with key date_order
+        return fields.Datetime.to_string(date_order_utc)
 
     def _sale_order_line_fields(self):
         cbiz_fields = [

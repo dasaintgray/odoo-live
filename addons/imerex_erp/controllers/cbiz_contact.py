@@ -236,9 +236,9 @@ class cBizContactService(Component):
     def _validator_contact_fields(self):
         res = {
             "id": {"type": "integer"},
+            "shipper_id": {},
             "name": {"type": "string"},
             "type": {},
-            "shipper_id": {},
             "first_name": {},
             "last_name": {},
             "name_ext": {},

@@ -143,7 +143,7 @@ class cBizContactService(Component):
         for field in contact_fields:
             if field in values:
                 if field == "branch_id":
-                    #default faulse for the branch_id contact fields
+                    #default false for the branch_id contact fields
                     contact_info.update({
                     field : False
                 })

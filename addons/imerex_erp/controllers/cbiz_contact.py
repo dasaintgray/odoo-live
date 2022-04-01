@@ -33,12 +33,7 @@ class cBizContactService(Component):
         """
         Create Contacts
         """
-        #check params for password, if yes, a user will be created instead of contact
-        if 'password' in params:
-            user = self._create_user(params)
-            partner = self._return_contact_values(user.partner_id.id)
-        else:
-            partner = self._create_contact(params)
+        partner = self._create_contact(params)
         return partner
 
     @restapi.method(
@@ -74,15 +69,15 @@ class cBizContactService(Component):
             raise ValidationError("No Contact or Users Found")
 
     @restapi.method(
-        [(['/<int:_id>'], "PATCH")],
+        [(['/'], "PATCH")],
         input_param=restapi.CerberusValidator("_validator_update"),
         output_param=restapi.CerberusValidator("_validator_return_update")
         )
-    def update(self, _id, **params):
+    def update(self,**params):
         """
         Update Contact information
         """
-        partner = self._update_contact(_id,params)
+        partner = self._update_contact(params)
         return partner
 
     def _validator_return_get(self):
@@ -119,21 +114,9 @@ class cBizContactService(Component):
                 }
             }
 
-    def _validator_return_search(self):
-        schema = self._validator_return_get()
-        schema.pop("image_1920")
-        return {
-            "count": {"type": "integer", "required": True},
-            "rows": {
-                "type": "list",
-                "required": True,
-                "schema": {"type": "dict", "schema": schema},
-            },
-        }
-
     def _validator_update(self):
         res = self._validator_contact_fields()
-        res.pop("id")
+        #Remove unneeded validator fields
         res.pop("name")
         return res
 
@@ -142,23 +125,25 @@ class cBizContactService(Component):
             "update": {}
         }
         return res
-    def _create_user(self,values):
-        values["name"] = self._merge_names(values)
-        values["login"] = values["email"]
-        create_user = self.env['res.users']
-        created_user = create_user.create(values)
-        return created_user
-        
-
+      
     def _create_contact(self,values):
+        #Initialize variables
         contact_info = {}
-        create_contact = self.env["res.partner"]
+
+        #Parse image_1920 binary data to Odoo compatible binary
         values["image_1920"] = self._trim_image(values)
+
+        #Merge name of contact for name and display name
         values["name"] = self._merge_names(values)
+
+        #Get Contact Fields
         contact_fields = self._contact_fields()
+
+        #Serialize to list all contact_fields in the values parameters
         for field in contact_fields:
             if field in values:
                 if field == "branch_id":
+                    #default faulse for the branch_id contact fields
                     contact_info.update({
                     field : False
                 })
@@ -166,19 +151,53 @@ class cBizContactService(Component):
                     contact_info.update({
                         field : values[field]
                     })
-        created_contact = create_contact.create(contact_info)
+
+        #Create the partner/contact with given contact_info
+        created_contact = self.env["res.partner"].create(contact_info)
+
+        #Check for password params 
+        if 'password' in values:
+            #Require email if password params is included
+            if 'email' not in values:
+                raise ValidationError("Email is required for login credentials if password is in the parameters ")
+            #Create Portal User
+            created_user = self._user(contact=created_contact,password=values['password'])
+
+        #Create a dict to be return to the API
         return_contact = self._return_contact_values(created_contact.id)
         return return_contact
 
-    def _update_contact(self,id,values):
+    def _update_contact(self,values):
+        #Initialize variables
         contact_info = {}
-        update_contact = self.env["res.partner"].browse(id)
+        update_contact = {}
+        #Do not tolerate both keys.
+        if 'id' in values and 'shipper_id' in values:
+            raise("choose only one of the two parameters: 'id' or 'shipper_id")
+
+        #Get data if 'id' exist
+        if 'id' in values:
+            update_contact = self.env["res.partner"].browse(values['id'])
+
+        #Get data if 'shipper_id' exist
+        if 'shipper_id' in values:
+            update_contact = self.env["res.partner"].search([("shipper_id","=",str(values['shipper_id']))])
+
+        if not update_contact:
+            raise ValidationError("No contact to update!")
+
+        #Parse data to be compatible with system
         values["image_1920"] = self._trim_image(values)
         values["name"] = self._merge_names(values,update_contact)
+        
+        #Get Contact fields for serialization
         contact_fields = self._contact_fields()
+
+        #Serialize contact_fields with values/params
         for field in contact_fields:
             if field in values:
                 if field == "branch_id":
+                    #contact_field branch always have False value
                     contact_info.update({
                     field : False
                 })
@@ -186,10 +205,29 @@ class cBizContactService(Component):
                     contact_info.update({
                         field : values[field]
                     })
+
+        #Remove image key if no data inside
         if not contact_info["image_1920"]:
             contact_info.pop("image_1920")
-        updated_contact = update_contact.write(contact_info)
-        return {"update": updated_contact}
+
+        #update contact field
+        update_contact.write(contact_info)
+        #Check for password params 
+        if 'password' in values:
+            #Require email if password params is included
+            if not update_contact.email:
+                raise ValidationError("Email is required for login credentials if password is in the parameters ")
+            #If user exist, just edit password
+            if update_contact.user_ids:
+                self._user(contact=update_contact,create=False,password=values['password'])
+            else:
+                self._user(contact=update_contact,password=values['password'])
+            #change user login with email
+            if 'email' in values:
+                update_contact.user_ids.write({
+                    "login": values['email']
+                })
+        return {"update": True}
 
     def _validator_contact_fields(self):
         res = {
@@ -205,26 +243,60 @@ class cBizContactService(Component):
             "vat": {},
             "email": {},
             "image_1920": {},
+            "is_user": {},
+            "password": {}
         }
         return res
 
+    def _user(self,contact,create=True,password=False,):
+        user='Password Changed'
+        if create == True:
+            user = self.env['res.users'].create([{
+                'name': contact.name,
+                'login': contact.email,
+                'partner_id': contact.id,
+                'company_ids': self.env['res.company'].search([]).ids,
+                'branch_ids': self.env['res.branch'].search([]).ids,
+                'groups_id': [(6, 0, [self.env.ref('base.group_portal').id])],
+                }])
+        if password:
+            set_password = self.env['change.password.user'].create({
+                    "wizard_id": self.env['change.password.wizard'].create({}).id,
+                    "user_id": contact.user_ids.id,
+                    "user_login": contact.user_ids.login,
+                    "new_passwd": password
+                })
+            set_password.change_password_button()
+        return user
+
     def _merge_names(self,values,update_contact=False):
+        #Initialize Variables
         full_name = ''
         old_full_name = {}
+
+        #to recycle the def with update
         if update_contact:
             old_full_name["first_name"] = update_contact.first_name
             old_full_name["last_name"] = update_contact.last_name
             old_full_name["name_ext"] = update_contact.name_ext
+
+        #Merge New Name and Old Name
         for name in ["first_name","last_name","name_ext"]:
             if name in values:
                 full_name += ' ' + values[name]
             elif update_contact:
                 full_name += ' ' + old_full_name[name]
+        
+        #Delete the space before the full name
         full_name = full_name[1:]
+
         return full_name
 
     def _trim_image(self,values):
+        #Initialize Variables
         image_1920 = ""
+
+        #Remove the prepend and retain only Base64 Value
         if "image_1920" in values:
             if values["image_1920"]:
                 image_1920 = values["image_1920"][18:]
@@ -323,4 +395,3 @@ class cBizContactService(Component):
             return "data:image;base64," + data.decode('utf-8')
         else:
             return False
-

@@ -44,7 +44,7 @@ class cBizCargoJWT(models.Model):
         return token
     
     def api_headers(self):
-        domain = 'https://cargo-gw.circuitmindz.com'
+        domain = 'https://dev-gw.circuitmindz.com'
         #check expiration
         expiration = self.search([]).expiration_Time
         timenow = datetime.now().timestamp()

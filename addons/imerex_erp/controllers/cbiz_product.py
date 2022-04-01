@@ -121,42 +121,58 @@ class cBizProductService(Component):
         """
         Product QTY by Code and Branch ID
         """
+        #Search Branch with the given cargo_branch_id
         branch = self.env['res.branch'].search([('cargo_branch_id','=',cargo_branch_id)])
-        # if not branch:
-        #     raise ValidationError("No Branch with given Cargo ID")
+
+        #Search Warehouse Locations using the branch ID
         location = self.env['stock.warehouse'].search([('branch_id','=',branch.ids)]).view_location_id
-        quantity = self.env['stock.quant']
+
+        #Create a list of IDs in order to merge them with given parameters.
+        #This code block is created just in case additional parameters are added
         if code:
+            #if a comma is detected on the string, convert string to list
             if ',' in code:
                 codes = code.split(',') 
                 search_ids = self.env['product.template'].search([("code","in",codes)]).ids
             else:
+                #if code is singleton without delimiter
                 search_ids = self.env['product.template'].search([("code","=",code)]).ids
         else:
+            #If no given code, initialize product template ids for search_ids
             search_ids = self.env['product.template'].search([]).ids
+
+        #<-- Insert New Code Block Parameter here with list(set(A)&set(search_ids)) --> 
+
+        #Check if there are items with all given parameters
         if not search_ids:
             raise ValidationError("No Product Found")
+
+        
         final_search = self.env['product.template'].search([("id","in",search_ids)])
         return_value=[]
 
-        base_url = self.env['ir.config_parameter'].get_param('web.base.url')
+        base_url = self.env['ir.config_parameter'].get_param('web.base.url') + "/web/image/product.template/"
         for id in final_search.ids:
             product = self.env['product.product'].browse(id)
+
+            #If location found, system will use warehouse, else system will use all
             if location:
-                qty_available = quantity._get_available_quantity(product,location)
+                qty_available = self.env['stock.quant']._get_available_quantity(product,location)
             else:
                 qty_available = product.qty_available
-            image_url_128 = base_url + "/web/image/product.template/" + str(id) + "/image_128"
-            image_url_256 = base_url + "/web/image/product.template/" + str(id) + "/image_256"
-            image_url_512 = base_url + "/web/image/product.template/" + str(id) + "/image_512"
-            details = {}
+    
+            #Search for tax to compute, temporarily hardcoded, however needed to be adjusted if multiple sales tax are included
             tax = product.taxes_id.search([('company_id','=',2),('type_tax_use','=','sale')],limit=1)
+
+            #Compute Total with Tax with given Parameter
             orderline = self.env['sale.order.line'].new({
                 'product_template_id': product.id,
                 'price_unit': product.list_price,
                 'tax_id': tax
             })
-            details.update({
+
+            #Create a dict of the product details
+            details = {
                 'id': product.id,
                 'code': product.code,
                 'name': product.name,
@@ -167,10 +183,12 @@ class cBizProductService(Component):
                 'currency': product.currency_id.display_name,
                 'branch': branch.receipt_branchname or '',
                 'description': product.description_sale or '',
-                'image_url_128': image_url_128,
-                'image_url_256': image_url_256,
-                'image_url_512': image_url_512
-            })
+                'image_url_128': base_url + str(id) + "/image_128",
+                'image_url_256': base_url + str(id) + "/image_256",
+                'image_url_512': base_url + str(id) + "/image_512"
+            }
+
+            #List all appended values from details
             return_value.append(details)
         return return_value
 

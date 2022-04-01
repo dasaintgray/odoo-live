@@ -2,6 +2,7 @@
 
 from . import city
 from . import res_partner
+from . import res_users
 from . import hashrow
 from . import cbiz_cargo
 from . import sale_order

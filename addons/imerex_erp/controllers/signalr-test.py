@@ -1,13 +1,16 @@
 import sys
 sys.path.append("./")
 from signalrcore.hub_connection_builder import HubConnectionBuilder
+import logging
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
 
 def input_with_default(input_text, default_value):
     value = input(input_text.format(default_value))
     return default_value if value is None or value.strip() == "" else value
 
 def access_token():
-    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9naXZlbm5hbWUiOiJBZG1pbmlzdHJhdG9yIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6ImFkbWluIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiI4ODg4ZjY5YS02MWFmLTQxOTgtYmVjZC02MzA2M2Q4N2UxYWUiLCJuYmYiOjE2NDg2ODcwNDcsImV4cCI6MTY0ODc3MzQ0NywiaXNzIjoiY2lyY3VpdG1pbmR6LmNvbSIsImF1ZCI6ImNpcmN1aXRtaW5kei5jb20ifQ.IC5Z7y78s5DYzGlW6ZuN5-bJQbpCo-yUjxFPP5ATZs4"
+    return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9naXZlbm5hbWUiOiJBZG1pbmlzdHJhdG9yIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6ImFkbWluIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiIxNDFlYWU1MC0zN2FmLTQ4ZGEtOWRiMS0wNzczYzNmYTU4YjYiLCJuYmYiOjE2NDg3OTc3NzEsImV4cCI6MTY0ODg4NDE3MSwiaXNzIjoiY2lyY3VpdG1pbmR6LmNvbSIsImF1ZCI6ImNpcmN1aXRtaW5kei5jb20ifQ.A-iQxPivKC_trBaIZJdu-rIXn14b0I1Ozx4xP7u02I0"
 
 server_url = input_with_default('Enter your server url(default: {0}): ', "https://cargo-chatsupport.circuitmindz.com/chathub")
 username = input_with_default('Enter your username (default: {0}): ', "jtecson")
@@ -17,6 +20,8 @@ hub_connection = HubConnectionBuilder()\
         options={
             "access_token_factory": lambda: access_token(),
             }
+    ).configure_logging(
+        logging.DEBUG,handler=handler
     ).with_automatic_reconnect({
             "type": "interval",
             "keep_alive_interval": 3,

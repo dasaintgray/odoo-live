@@ -134,7 +134,7 @@ class cBizCargoAPI(models.Model):
                 "countryId":3,
                 "longitude": 0,
                 "latitude": 0,
-                "createdBy": "Odoo",
+                "createdBy": "CBIZ",
                 "auditUserId": 2,
                 "shipperaddress" : ""
                 }
@@ -176,6 +176,28 @@ class cBizCargoAPI(models.Model):
             api_response = self.env['cbiz.api'].api_validation(api_request)
             return api_response
 
+    def cargo_password_shipper(self,values):
+        apicargo = self.env['cbiz.api'].api_headers()
+        if apicargo['token']:
+            #initialize constant values
+            api_body = {
+                "shipperId": values['shipper_id'],
+                "remarks": "Updated by CBIZ",
+                "isactive": True,
+                "countryId":3,
+                "longitude": 0,
+                "latitude": 0,
+                "updatedBy": "CBIZ",
+                "auditUserId": 2,
+                "appusername": values['username'],
+                "appuserpass": values['password']
+                }
+            #jsonify and send api_request
+            api_data = json.dumps(api_body)
+            api_request = requests.put(apicargo['shipper_url'], data=api_data, headers=apicargo['headers'])
+            api_response = self.env['cbiz.api'].api_validation(api_request)
+            return api_response
+
     def cargo_update_shipper(self,values,res_partner):
         apicargo = self.env['cbiz.api'].api_headers()
         if apicargo['token']:
@@ -187,7 +209,7 @@ class cBizCargoAPI(models.Model):
                 "countryId":3,
                 "longitude": 0,
                 "latitude": 0,
-                "updatedBy": "Odoo",
+                "updatedBy": "CBIZ",
                 "auditUserId": 2,
                 "shipperaddress": "",
                 "shipperExt": ""
@@ -264,7 +286,6 @@ class cBizCargoAPI(models.Model):
             if 'status' in cargo_get_shipper:
                 if cargo_get_shipper['status']==404:
                     raise ValidationError('No Shipper Found in Circuit Track')
-            syncing = self.env['res.partner']
             image_1920 = ''
             if 'shipperphoto' in cargo_get_shipper:
                 if cargo_get_shipper['shipperphoto']:
@@ -288,7 +309,25 @@ class cBizCargoAPI(models.Model):
                 'loyalty_id': 8800000000000 + cargo_get_shipper['shipperId'],
                 'branch_id': False
             }
-            create_partner = syncing.create(values)
+            create_partner = self.env['res.partner'].create(values)
+            if cargo_get_shipper['appusername'] and cargo_get_shipper['appuserpass']:
+                #Create user from create_partner
+                self.env['res.users'].create([{
+                    'name': create_partner.name,
+                    'login': cargo_get_shipper['appusername'] or create_partner.email,
+                    'partner_id': create_partner.id,
+                    'company_ids': self.env['res.company'].search([]).ids,
+                    'branch_ids': self.env['res.branch'].search([]).ids,
+                    'groups_id': [(6, 0, [self.env.ref('base.group_portal').id])],
+                    }])
+                #Set the password for user with partner = create_partner
+                set_password = self.env['change.password.user'].create({
+                        "wizard_id": self.env['change.password.wizard'].create({}).id,
+                        "user_id": create_partner.user_ids.id,
+                        "user_login": cargo_get_shipper['appusername'],
+                        "new_passwd": cargo_get_shipper['appuserpass']
+                    })
+                set_password.change_password_button()
             return_partner = create_partner
         return return_partner
 

@@ -121,14 +121,18 @@ class cBizContactService(Component):
         return res
 
     def _validator_return_update(self):
-        res = {
-            "update": {}
-        }
+        res = self._validator_contact_fields()
         return res
       
     def _create_contact(self,values):
         #Initialize variables
         contact_info = {}
+
+        #Check for password params
+        if 'password' in values and 'username' not in values:
+            raise ValidationError("username is required for login")
+        elif 'password' not in values and 'username' in values:
+            raise ValidationError("password is required for login")
 
         #Parse image_1920 binary data to Odoo compatible binary
         values["image_1920"] = self._trim_image(values)
@@ -155,13 +159,9 @@ class cBizContactService(Component):
         #Create the partner/contact with given contact_info
         created_contact = self.env["res.partner"].create(contact_info)
 
-        #Check for password params 
-        if 'password' in values:
-            #Require email if password params is included
-            if 'email' not in values:
-                raise ValidationError("Email is required for login credentials if password is in the parameters ")
-            #Create Portal User
-            created_user = self._user(contact=created_contact,password=values['password'])
+        #Create Portal User
+        if 'username' in values and 'password' in values:
+            created_user = self._user(contact=created_contact,values=values)
 
         #Create a dict to be return to the API
         return_contact = self._return_contact_values(created_contact.id)
@@ -171,17 +171,25 @@ class cBizContactService(Component):
         #Initialize variables
         contact_info = {}
         update_contact = {}
-        #Do not tolerate both keys.
+
+        #Param Validations
         if 'id' in values and 'shipper_id' in values:
             raise("choose only one of the two parameters: 'id' or 'shipper_id")
-
-        #Get data if 'id' exist
-        if 'id' in values:
-            update_contact = self.env["res.partner"].browse(values['id'])
+        if 'password' in values and 'username' not in values:
+            raise ValidationError("username is required for login")
+        elif 'password' not in values and 'username' in values:
+            raise ValidationError("password is required for login")
 
         #Get data if 'shipper_id' exist
         if 'shipper_id' in values:
             update_contact = self.env["res.partner"].search([("shipper_id","=",str(values['shipper_id']))])
+            if not update_contact:
+                created_partner = self.env['cbiz.api.cargoapi'].cargo_sync_shipper(values['shipper_id'])
+                values['id'] = created_partner.id
+
+        #Get data if 'id' exist
+        if 'id' in values:
+            update_contact = self.env["res.partner"].browse(values['id'])
 
         if not update_contact:
             raise ValidationError("No contact to update!")
@@ -200,7 +208,7 @@ class cBizContactService(Component):
                     #contact_field branch always have False value
                     contact_info.update({
                     field : False
-                })
+                    })
                 else:
                     contact_info.update({
                         field : values[field]
@@ -212,22 +220,18 @@ class cBizContactService(Component):
 
         #update contact field
         update_contact.write(contact_info)
-        #Check for password params 
-        if 'password' in values:
-            #Require email if password params is included
-            if not update_contact.email:
-                raise ValidationError("Email is required for login credentials if password is in the parameters ")
+        #Check for logins params 
+        if 'username' in values and 'password' in values:
             #If user exist, just edit password
             if update_contact.user_ids:
-                self._user(contact=update_contact,create=False,password=values['password'])
-            else:
-                self._user(contact=update_contact,password=values['password'])
-            #change user login with email
-            if 'email' in values:
                 update_contact.user_ids.write({
-                    "login": values['email']
+                    "login": values['username']
                 })
-        return {"update": True}
+                self._user(contact=update_contact,create=False,values=values)
+            else:
+                self._user(contact=update_contact,values=values)          
+
+        return self._return_contact_values(update_contact.id)
 
     def _validator_contact_fields(self):
         res = {
@@ -243,28 +247,28 @@ class cBizContactService(Component):
             "vat": {},
             "email": {},
             "image_1920": {},
-            "is_user": {},
-            "password": {}
+            "password": {},
+            "username": {},
         }
         return res
 
-    def _user(self,contact,create=True,password=False,):
-        user='Password Changed'
+    def _user(self,contact,create=True,values=False,):
         if create == True:
             user = self.env['res.users'].create([{
                 'name': contact.name,
-                'login': contact.email,
+                'login': values['username'] or contact.email,
                 'partner_id': contact.id,
                 'company_ids': self.env['res.company'].search([]).ids,
                 'branch_ids': self.env['res.branch'].search([]).ids,
                 'groups_id': [(6, 0, [self.env.ref('base.group_portal').id])],
                 }])
-        if password:
+        if values:
+            user='Password Changed'
             set_password = self.env['change.password.user'].create({
                     "wizard_id": self.env['change.password.wizard'].create({}).id,
                     "user_id": contact.user_ids.id,
-                    "user_login": contact.user_ids.login,
-                    "new_passwd": password
+                    "user_login": values['username'] or contact.user_ids.login,
+                    "new_passwd": values['password']
                 })
             set_password.change_password_button()
         return user
@@ -284,7 +288,7 @@ class cBizContactService(Component):
         for name in ["first_name","last_name","name_ext"]:
             if name in values:
                 full_name += ' ' + values[name]
-            elif update_contact:
+            elif update_contact and old_full_name[name]:
                 full_name += ' ' + old_full_name[name]
         
         #Delete the space before the full name
@@ -324,7 +328,7 @@ class cBizContactService(Component):
             "vat": res_partner.vat,
             "email": res_partner.email,
             "branch_id": False,
-            "is_user": res_partner.user_ids.active or False
+            "username": res_partner.user_ids.login or False
         }
 
     def _return_contact_list(self,search_ids):
@@ -345,7 +349,7 @@ class cBizContactService(Component):
                 res_partner.vat,
                 res_partner.email,
                 res_partner.branch_id,
-                res_users.active
+                res_users.login
                 FROM res_partner
                 LEFT JOIN res_users ON (res_partner.id = res_users.partner_id)
                 WHERE res_partner.id IN (%s)) table1 LEFT JOIN
@@ -381,7 +385,7 @@ class cBizContactService(Component):
                     "vat":i[9] or False, 
                     "email":i[10] or False,
                     "branch_id":i[11] or False,
-                    "is_user":i[12] or False,
+                    "username":i[12] or False,
                     "image_1920": image or False
                 }
                 rows.append(datarow)

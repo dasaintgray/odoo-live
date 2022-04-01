@@ -101,27 +101,25 @@ class ResPartner(models.Model):
     def write(self, vals):
         #Do not change Address/Contact Type if Shipper
         if self.shipper_id:
-            vals['loyalty_id'] = 8800000000000 + str(self.shipper_id)
+            vals['loyalty_id'] = 8800000000000 + int(self.shipper_id)
             try:
                 if not self.type == vals['type']:
                     raise ValidationError("Already Synced as a Shipper in CircuitTrack! you cannot edit address type")
             except KeyError:
                 pass
+
         #If no shipper_id, shipper contact will create a data in shipper service CircuitTrack
         if not self.shipper_id and self.type == 'shipper':
             sync = self.env['cbiz.api.cargoapi'].cargo_create_shipper(self)
             if sync.text:
                 vals['shipper_id'] = sync.text
-                vals['loyalty_id'] = 8800000000000 + str(sync.text)
+                vals['loyalty_id'] = 8800000000000 + int(sync.text)
+
         #if shipper with shipper_id, will update data in shipper service CircuitTrack
         elif self.type == 'shipper':
-            #check if created by odoo
-            # shipper_check = self.env['cbiz.api.cargoapi'].cargo_get_shipper(vals['shipper_id'] if 'shipper_id' in vals else self.shipper_id)
             sync = self.env['cbiz.api.cargoapi'].cargo_update_shipper(vals,self)
-            # if not shipper_check['updatedBy'] == 'Odoo':
-            #     if not shipper_check['createdBy'] == 'Odoo':
-            #         sync = self.env['cbiz.api.cargoapi'].cargo_update_shipper(vals,self)
-        #reattach Odoo res_partner data and code
+            vals['loyalty_id'] = 8800000000000 + int(self.shipper_id)
+            
         partners = super(ResPartner, self).write(vals)
         return partners
 

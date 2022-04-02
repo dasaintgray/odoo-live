@@ -49,8 +49,11 @@ class StockPicking(models.Model):
             domain_return = ['&',('company_id','=', company),'&',('usage', '=','internal'),('id','=',warehouse)]
         elif self.picking_type_id.code == 'internal':
             warehouse = self.env['stock.warehouse'].search([('branch_id','=',self.env.user.branch_ids.ids),('branch_id','!=',self.branch_id.id)]).lot_stock_id.ids
+            if not warehouse:
+                warehouse = self.env['stock.warehouse'].sudo().search([('company_id','=',self.env.company.id),('branch_id','!=',self.branch_id.id)]).lot_stock_id.ids
             domain_return = ['&',('company_id','=', company),'&',('usage', '=','internal'),('id','in',warehouse)]
             self.location_dest_id = warehouse[0]
+
         else:
             domain_return = ['&',('company_id','=', company),('usage', '=','internal')]
         return {'domain': {'location_dest_id': domain_return}}

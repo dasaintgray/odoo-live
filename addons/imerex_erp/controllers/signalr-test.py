@@ -1,3 +1,4 @@
+from datetime import datetime
 import sys
 sys.path.append("./")
 from signalrcore.hub_connection_builder import HubConnectionBuilder
@@ -20,8 +21,6 @@ hub_connection = HubConnectionBuilder()\
         options={
             "access_token_factory": lambda: access_token(),
             }
-    ).configure_logging(
-        logging.DEBUG,handler=handler
     ).with_automatic_reconnect({
             "type": "interval",
             "keep_alive_interval": 3,
@@ -38,7 +37,10 @@ message = None
 while message != "exit()":
     message = input(">> ")
     if message is not None and message != "" and message != "exit()":
-        hub_connection.send("SendMessage", [username, message])
+        message += " - " + str(datetime.now().date()) + " " + str(datetime.now().time())
+        while message:
+            message += '*'
+            hub_connection.send("SendMessage", [username, message])
 
 hub_connection.stop()
 sys.exit(0)

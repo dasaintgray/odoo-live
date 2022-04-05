@@ -151,7 +151,7 @@ class cBizProductService(Component):
         final_search = self.env['product.template'].search([("id","in",search_ids)])
         return_value=[]
 
-        base_url = self.env['ir.config_parameter'].get_param('web.base.url') + "/web/image/product.template/"
+        base_url = self.env['ir.config_parameter'].get_param('web.base.url').replace('http://','https://') + "/web/image/product.template/"
         for id in final_search.ids:
             product = self.env['product.product'].browse(id)
 

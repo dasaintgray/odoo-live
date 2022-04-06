@@ -171,11 +171,27 @@
 												<td>
 													<strong>Grand Total</strong>
 												</td>
-												<td class="text-right">
+												<t t-foreach="columns" t-as="c">
+													<t t-if="c in ['Total']">
+														<tr class="border-black o_subtotal" t-if="grand_journal_dict.get(c,False)">
+															<td>
+																<strong>
+																	<t t-esc="c" />
+																</strong>
+															</td>
+															<td class="text-right">
+																<td align='right'>
+																	<t t-esc="'%.2f'%grand_journal_dict.get(c,0.0)" t-esc-options='{"widget": "monetary", "display_currency": currency}' />
+																</td>
+															</td>
+														</tr>
+													</t>
+												</t>
+												<!-- <td class="text-right">
 													<td align='right'>
 														<t t-esc="tax['grand_amount']" t-options="{'widget': 'float', 'precision': currency_precision}"/>
 													</td>
-												</td>
+												</td> -->
 											</tr>
 										</t>
 									</t>

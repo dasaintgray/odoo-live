@@ -64,14 +64,14 @@ class cBizPaymentService(Component):
             payments = json.loads(invoice.invoice_payments_widget)
             for payment in payments['content']:
                 payment_ids.append(payment['account_payment_id'])
-        
-        void = self.env['account.payment'].search([('id','=',payment_ids[params['payment_sequence']])])
-        void.action_draft()
-        void.action_cancel()
-        if void.state == 'cancel':
-            return {"void": True}
+        if len(payment_ids) > 1:
+            void = self.env['account.payment'].search([('id','=',payment_ids[params['payment_sequence']])])
+            void.action_draft()
+            void.action_cancel()
+            if void.state == 'cancel':
+                return {"void": True}
         else:
-            raise ValidationError("You cannot void this payment!")
+            raise ValidationError("You cannot void this payment or no payment available!")
 
     def _validator_void(self):
         res = {

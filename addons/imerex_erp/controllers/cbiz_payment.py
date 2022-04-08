@@ -1,9 +1,8 @@
-
-from xml.dom import ValidationErr
 from odoo import fields, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
 from odoo.exceptions import ValidationError
+import json
 
 class cBizPaymentService(Component):
     _inherit = "base.rest.service"
@@ -48,6 +47,38 @@ class cBizPaymentService(Component):
             payment.action_create_payments()
             payment_return.append(self._return_response_payment(payment))
         return payment_return
+    
+    @restapi.method(
+        [(['/void'], "POST")],
+        input_param=restapi.CerberusValidator("_validator_void"),
+        # output_param=restapi.CerberusValidator("_validator_return_create")
+        )
+    def void(self,**params):
+        """
+        name: KSAXXXXX
+        payment_sequence: X
+        """
+        invoices = self.env['sale.order'].search([('name','=', params['name'])]).invoice_ids
+        payment_ids = ['NULL']
+        for invoice in invoices:
+            payments = json.loads(invoice.invoice_payments_widget)
+            for payment in payments['content']:
+                payment_ids.append(payment['account_payment_id'])
+        
+        void = self.env['account.payment'].search([('id','=',payment_ids[params['payment_sequence']])])
+        void.action_draft()
+        void.action_cancel()
+        if void.state == 'cancel':
+            return {"void": True}
+        else:
+            raise ValidationError("You cannot void this payment!")
+
+    def _validator_void(self):
+        res = {
+            "name":{},
+            "payment_sequence":{"type": "integer"}
+        }
+        return res
 
     def _validator_create(self):
         res = {

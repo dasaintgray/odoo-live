@@ -50,7 +50,7 @@ class PublicInvoice(http.Controller):
 
     @http.route(['/idl/<string:reference>'], type='http', auth="public", website=True)
     def download_pdf(self, reference):
-        invoice = request.env['account.move'].sudo().search([('ref', '=', reference)], limit=1)
+        invoice = request.env['sale.order'].sudo().search([('name', '=', reference)], limit=1).invoice_ids
         if not invoice:
             return None
         pdf, _ = request.env['ir.actions.report']._get_report_from_name(

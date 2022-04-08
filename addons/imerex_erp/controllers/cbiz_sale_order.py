@@ -69,10 +69,19 @@ class cBizSaleOrderService(Component):
             existing_payment_amount += invoice.amount_total - invoice.amount_residual
 
             #Variable will be used to compare cancelled invoice payments and created new invoices
-            existing_invoices.append(invoice.name)
+            existing_invoices.append(invoice)
 
             #If invoice not reversed, proceed with refund and credit note return payment
             if invoice.payment_state != 'reversed':
+
+                #Void payments first to remove payment_state 'paid' and 'in_payment'
+                payments = json.loads(invoice.invoice_payments_widget)
+                if payments != False:
+                    for payment in payments['content']:
+                        void = self.env['account.payment'].search([('id','=',payment['account_payment_id'])])
+                        void.action_draft()
+                        void.action_cancel()
+
                 #Use the refund wizard existing in Odoo ORM
                 refund_wizard = self.env['account.move.reversal'].with_context(active_model="account.move", active_ids=invoice.id).create({
                     'reason': params['name'] + ': Edited by CircuitTrack',
@@ -82,30 +91,35 @@ class cBizSaleOrderService(Component):
                 })
                 refund_wizard.reverse_moves()
 
-                if invoice.payment_state != 'reversed':
-                    #Post Credit Note
-                    credit_note = refund_wizard.new_move_ids
-                    credit_note.write({'invoice_date': date_order})
-                    credit_note.action_post()
+                # #CREDIT NOTE WIDGET STANDBY
+                # if invoice.payment_state != 'reversed':
+                #     #Post Credit Note
+                #     credit_note = refund_wizard.new_move_ids
+                #     credit_note.write({'invoice_date': date_order})
+                #     credit_note.action_post()
 
-                    #Create a payment in Credit Note
-                    credit_note_payment = invoice.env['account.payment.register'].with_context({
-                        "active_model": "account.move",
-                        "active_ids": credit_note.id
-                    }).create([{
-                        "payment_date": date_order,
-                        "amount": invoice.amount_total,
-                        "journal_id": sale_order.payment_journal_id.id,
-                        "payment_method_id": 1,
-                        "company_id": sale_order.company_id.id
-                    }])
-                    credit_note_payment.action_create_payments()
+                #     #Create a payment in Credit Note
+                #     credit_note_payment = invoice.env['account.payment.register'].with_context({
+                #         "active_model": "account.move",
+                #         "active_ids": credit_note.id
+                #     }).create([{
+                #         "payment_date": date_order,
+                #         "amount": invoice.amount_total,
+                #         "journal_id": sale_order.payment_journal_id.id,
+                #         "payment_method_id": 1,
+                #         "company_id": sale_order.company_id.id
+                #     }])
+                #     credit_note_payment.action_create_payments()
 
-                    #Log a note in the cancelled invoice
-                    log_note += " - Reverse Entry: " + credit_note.name
+                #     #Log a note in the cancelled invoice
+                #     log_note += " - Reverse Entry: " + credit_note.name
+                log_note += " - Reverse Entry: " + refund_wizard.new_move_ids.name
 
             #Log a note in the cancelled invoice
             invoice.message_post(body=log_note)
+            invoice.write({
+                'name': invoice.name + '-cancelled'
+            })
 
         #Cancel previous invoice to create new amended invoice
         sale_order.action_cancel()
@@ -132,29 +146,22 @@ class cBizSaleOrderService(Component):
             #delete void params as it is not needed in _create_sale_order function
             params.pop('void')
 
-            #Get the changes on payment amount
-            params['payment_amount'] -= existing_payment_amount
-
-            #Check if payment_amount has been reduced compared to previous
-            if params['payment_amount'] < 0:
-                raise ValidationError("Payment Amount cannot be reduced!")
-
             #Commit and save all the code run progress before creating Sales Order to avoid unique constraints
             sale_order.env.cr.commit()
 
             #Create New Sale Order
             revised_sale_order_return = self._create_sale_order(params)
 
-            #Assign Outstanding payment from previous invoices to the newly created invoices in the sales order
-            revised_sale_order = self.env['sale.order'].browse(revised_sale_order_return['id'])
-            for invoice in revised_sale_order.invoice_ids:
+            # #Assign Outstanding payment from previous invoices to the newly created invoices in the sales order
+            # revised_sale_order = self.env['sale.order'].browse(revised_sale_order_return['id'])
+            # for invoice in revised_sale_order.invoice_ids:
 
-                #Convert the JSON Value from the payment widget(invoice_outstanding_credits_debits_widget) to confirm outstanding payment to new invoice
-                pending_payments = json.loads(invoice.invoice_outstanding_credits_debits_widget)
-                if pending_payments['content']:
-                    for i in pending_payments['content']:
-                        if i['journal_name'] in existing_invoices:
-                            invoice.js_assign_outstanding_line(i['id'])
+            #     #Convert the JSON Value from the payment widget(invoice_outstanding_credits_debits_widget) to confirm outstanding payment to new invoice
+            #     pending_payments = json.loads(invoice.invoice_outstanding_credits_debits_widget)
+            #     if pending_payments['content']:
+            #         for i in pending_payments['content']:
+            #             if i['journal_name'] in existing_invoices:
+            #                 invoice.js_assign_outstanding_line(i['id'])
 
             return revised_sale_order_return
         return {"void": True}

@@ -118,14 +118,31 @@ class cBizProductService(Component):
         input_param=restapi.CerberusValidator("_validator_mobile")
         )
     def mobile(self,cargo_branch_id=False,code=''):
+
         """
         Product QTY by Code and Branch ID
         """
         #Search Branch with the given cargo_branch_id
         branch = self.env['res.branch'].search([('cargo_branch_id','=',cargo_branch_id)])
-
+        if not branch:
+            branch_statement = ''
+            location = self.env['stock.warehouse'].search([]).lot_stock_id
         #Search Warehouse Locations using the branch ID
-        location = self.env['stock.warehouse'].search([('branch_id','=',branch.ids)]).view_location_id
+        else:
+            branch_ids = ", ".join(repr(id) for id in branch.ids)
+            branch_statement = _("""
+            LEFT JOIN
+            (SELECT
+            product_template_res_branch_rel.product_template_id as id,
+            res_branch.receipt_branchname
+            FROM product_template_res_branch_rel
+            LEFT JOIN res_branch
+            ON product_template_res_branch_rel.res_branch_id = res_branch.id
+            WHERE res_branch.id IN (%(branch_id)s)) table3
+            ON
+            table1.id = table3.id
+            """,branch_id=branch_ids)
+            location = self.env['stock.warehouse'].search([('branch_id','=',branch.ids)]).lot_stock_id
 
         #Create a list of IDs in order to merge them with given parameters.
         #This code block is created just in case additional parameters are added
@@ -133,13 +150,13 @@ class cBizProductService(Component):
             #if a comma is detected on the string, convert string to list
             if ',' in code:
                 codes = code.split(',') 
-                search_ids = self.env['product.template'].search([("code","in",codes)]).ids
+                search_ids = self.env['product.template'].search([("code","in",codes)])
             else:
                 #if code is singleton without delimiter
-                search_ids = self.env['product.template'].search([("code","=",code)]).ids
+                search_ids = self.env['product.template'].search([("code","=",code)])
         else:
             #If no given code, initialize product template ids for search_ids
-            search_ids = self.env['product.template'].search([]).ids
+            search_ids = self.env['product.template'].search([])
 
         #<-- Insert New Code Block Parameter here with list(set(A)&set(search_ids)) --> 
 
@@ -147,49 +164,104 @@ class cBizProductService(Component):
         if not search_ids:
             raise ValidationError("No Product Found")
 
-        
-        final_search = self.env['product.template'].search([("id","in",search_ids)])
         return_value=[]
 
         base_url = self.env['ir.config_parameter'].get_param('web.base.url').replace('http://','https://') + "/web/image/product.template/"
-        for id in final_search.ids:
-            product = self.env['product.product'].browse(id)
 
-            #If location found, system will use warehouse, else system will use all
-            if location:
-                qty_available = self.env['stock.quant']._get_available_quantity(product,location)
+        ids = ", ".join(repr(id) for id in search_ids.ids)
+        location_ids = ", ".join(repr(id) for id in location.ids)
+
+        self.env.cr.execute(_("""
+            SELECT * FROM (SELECT
+            product_template.id,
+            product_template.default_code,
+            product_template.code,
+            product_template.name,
+            product_template.description_sale,
+            product_template.list_price
+            FROM product_template
+            WHERE product_template.id IN (%(product_ids)s)) table1
+            LEFT JOIN
+            (SELECT
+            stock_quant.product_id,
+            SUM(stock_quant.quantity) as quantity
+            FROM stock_quant
+            WHERE stock_quant.location_id in (%(location_id)s) GROUP BY stock_quant.product_id) table2
+            ON table1.id = table2.product_id
+            LEFT JOIN
+            (SELECT
+            product_taxes_rel.prod_id as id,
+            account_tax.amount_type,
+            account_tax.amount,
+            account_tax.price_include
+            FROM product_taxes_rel
+            LEFT JOIN account_tax
+            ON product_taxes_rel.tax_id = account_tax.id
+            WHERE account_tax.company_id = %(company_id)s) table4
+            ON table1.id = table4.id
+            %(branch_statement)s
+        """,product_ids=ids,location_id=location_ids,branch_statement=branch_statement,company_id=2))
+        data = self.env.cr.fetchall()
+        currency = self.env.company.currency_id.symbol
+        for i in data:
+            if i[11]:
+                if i[11]=='percent' and not i[11]:
+                    price = i[5] + (i[10]*i[5]/100)
+                elif not i[11]=='percent' and not i[11]:
+                    price = i[5] + i[10]
             else:
-                qty_available = product.qty_available
-    
-            #Search for tax to compute, temporarily hardcoded, however needed to be adjusted if multiple sales tax are included
-            tax = product.taxes_id.search([('company_id','=',2),('type_tax_use','=','sale')],limit=1)
-
-            #Compute Total with Tax with given Parameter
-            orderline = self.env['sale.order.line'].new({
-                'product_template_id': product.id,
-                'price_unit': product.list_price,
-                'tax_id': tax
-            })
-
-            #Create a dict of the product details
-            details = {
-                'id': product.id,
-                'code': product.code or '',
-                'name': product.name,
-                'display_name': product.display_name,
-                'qty': qty_available,
-                'sales_count': product.sales_count,
-                'price': orderline.price_unit + orderline.price_tax,
-                'currency': product.currency_id.display_name,
-                'branch': branch.receipt_branchname or '',
-                'description': product.description_sale or '',
-                'image_url_128': base_url + str(id) + "/image_128",
-                'image_url_256': base_url + str(id) + "/image_256",
-                'image_url_512': base_url + str(id) + "/image_512"
+                price = i[5]
+            datarow={
+                "id":i[0],
+                "default_code":i[1] or False,
+                "code":i[2] or False,
+                "name":i[3] or False,
+                "description":i[4] or False,
+                "price": price,
+                "qty":i[7] or 0,
+                "currency":currency or False,
+                "branch": i[13] if 13 < len(i) else '',
+                "salescount": 0,
+                'image_url_128': base_url + str(i[0]) + "/image_128",
+                'image_url_512': base_url + str(i[0]) + "/image_512"
             }
+            return_value.append(datarow)
 
-            #List all appended values from details
-            return_value.append(details)
+        # for id in search_ids.ids:
+        #     product = self.env['product.template'].browse(id)
+
+        #     #If location found, system will use warehouse, else system will use all
+        #     if location:
+        #         qty_available = self.env['stock.quant']._get_available_quantity(product,location)
+        #     else:
+        #         qty_available = product.qty_available
+    
+        #     #Search for tax to compute, temporarily hardcoded, however needed to be adjusted if multiple sales tax are included
+        #     tax = product.taxes_id.search([('company_id','=',2),('type_tax_use','=','sale')],limit=1)
+
+        #     #Compute Total with Tax with given Parameter
+        #     orderline = self.env['sale.order.line'].new({
+        #         'product_template_id': product.id,
+        #         'price_unit': product.list_price,
+        #         'tax_id': tax
+        #     })
+
+        #     #Create a dict of the product details
+        #     details = {
+        #         'id': product.id,
+        #         'code': product.code or '',
+        #         'name': product.name,
+        #         'description': product.description_sale or '',
+        #         'qty': qty_available,
+        #         'price': orderline.price_unit + orderline.price_tax,
+        #         'currency': product.currency_id.display_name,
+        #         'branch': branch.receipt_branchname or '',
+        #         'image_url_128': base_url + str(id) + "/image_128",
+        #         'image_url_512': base_url + str(id) + "/image_512"
+        #     }
+
+        #     #List all appended values from details
+        #     return_value.append(details)
         return return_value
 
     def _validator_mobile(self):

@@ -174,7 +174,7 @@ class cBizProductService(Component):
             #Create a dict of the product details
             details = {
                 'id': product.id,
-                'code': product.code,
+                'code': product.code or '',
                 'name': product.name,
                 'display_name': product.display_name,
                 'qty': qty_available,

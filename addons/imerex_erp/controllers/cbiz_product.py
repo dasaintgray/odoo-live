@@ -117,35 +117,45 @@ class cBizProductService(Component):
         [(['/mobile/'], "GET")],
         input_param=restapi.CerberusValidator("_validator_mobile")
         )
-    def mobile(self,cargo_branch_id=False,code=''):
+    def mobile(self,cargo_branch_id=False,code='',company_id=2):
 
         """
         Product QTY by Code and Branch ID
         """
         #Search Branch with the given cargo_branch_id
         branch = self.env['res.branch'].search([('cargo_branch_id','=',cargo_branch_id)])
+
+        #Check if there is a valid branch with given cargo_branch_id and search warehouse Locations using the branch ID
         if not branch:
-            branch_statement = ''
+            #Create an empty string appended_psql_query for Postgresql query exection
+            appended_psql_query = """"""
+            #Get all stock locations from warehouse
             location = self.env['stock.warehouse'].search([]).lot_stock_id
-        #Search Warehouse Locations using the branch ID
         else:
+            #Stringify list of ids in the branch for postgresql query consumption
             branch_ids = ", ".join(repr(id) for id in branch.ids)
-            branch_statement = _("""
+            #Create a Postgresl query execution and filter for branch ID
+            appended_psql_query = _("""
             LEFT JOIN
             (SELECT
-            product_template_res_branch_rel.product_template_id as id,
+            product_template_res_branch_rel.product_template_id AS id,
             res_branch.receipt_branchname
-            FROM product_template_res_branch_rel
-            LEFT JOIN res_branch
-            ON product_template_res_branch_rel.res_branch_id = res_branch.id
-            WHERE res_branch.id IN (%(branch_id)s)) table3
+            FROM
+            product_template_res_branch_rel
+            LEFT JOIN
+            res_branch
             ON
-            table1.id = table3.id
+            product_template_res_branch_rel.res_branch_id = res_branch.id
+            WHERE
+            res_branch.id IN (%(branch_id)s))
+            table_branch
+            ON
+            table_product.id = table_branch.id
             """,branch_id=branch_ids)
+            #Get the stock location from stock warehouse with given branch id
             location = self.env['stock.warehouse'].search([('branch_id','=',branch.ids)]).lot_stock_id
 
-        #Create a list of IDs in order to merge them with given parameters.
-        #This code block is created just in case additional parameters are added
+        #Create a list of Product IDs in order to merge them with given parameters.
         if code:
             #if a comma is detected on the string, convert string to list
             if ',' in code:
@@ -164,15 +174,19 @@ class cBizProductService(Component):
         if not search_ids:
             raise ValidationError("No Product Found")
 
+        #Initialize return values
         return_value=[]
-
+        #Initialize base_url
         base_url = self.env['ir.config_parameter'].get_param('web.base.url').replace('http://','https://') + "/web/image/product.template/"
 
-        ids = ", ".join(repr(id) for id in search_ids.ids)
+        #Stringify list of product_ids and location_ids in the branch for postgresql query consumption
+        product_ids = ", ".join(repr(id) for id in search_ids.ids)
         location_ids = ", ".join(repr(id) for id in location.ids)
 
+        #Query full table data from database
         self.env.cr.execute(_("""
-            SELECT * FROM (SELECT
+            SELECT * FROM
+            ((SELECT
             product_template.id,
             product_template.default_code,
             product_template.code,
@@ -180,14 +194,16 @@ class cBizProductService(Component):
             product_template.description_sale,
             product_template.list_price
             FROM product_template
-            WHERE product_template.id IN (%(product_ids)s)) table1
+            WHERE product_template.id IN (%(product_ids)s))
+            table_product
             LEFT JOIN
             (SELECT
             stock_quant.product_id,
             SUM(stock_quant.quantity) as quantity
             FROM stock_quant
-            WHERE stock_quant.location_id in (%(location_id)s) GROUP BY stock_quant.product_id) table2
-            ON table1.id = table2.product_id
+            WHERE stock_quant.location_id in (%(location_id)s) GROUP BY stock_quant.product_id)
+            table_stock_quant
+            ON table_product.id = table_stock_quant.product_id
             LEFT JOIN
             (SELECT
             product_taxes_rel.prod_id as id,
@@ -197,36 +213,61 @@ class cBizProductService(Component):
             FROM product_taxes_rel
             LEFT JOIN account_tax
             ON product_taxes_rel.tax_id = account_tax.id
-            WHERE account_tax.company_id = %(company_id)s) table4
-            ON table1.id = table4.id
-            %(branch_statement)s
-        """,product_ids=ids,location_id=location_ids,branch_statement=branch_statement,company_id=2))
+            WHERE account_tax.company_id = %(company_id)s)
+            table_tax
+            ON table_product.id = table_tax.id
+            LEFT JOIN
+            (SELECT
+            sale_order_line.product_id,
+            SUM(sale_order_line.product_uom_qty) AS sold
+            FROM sale_order_line
+            GROUP BY sale_order_line.product_id)
+            table_count
+            ON table_product.id = table_count.product_id
+            %(appended_psql_query)s
+            )
+            AS products
+            ORDER BY COALESCE(products.sold,0) DESC
+        """,
+        product_ids=product_ids,
+        location_id=location_ids,
+        appended_psql_query=appended_psql_query,
+        company_id=company_id))
+
+        #fetch catched query reponse
         data = self.env.cr.fetchall()
-        currency = self.env.company.currency_id.symbol
+
+        #get company currency
+        currency = self.env['res.company'].browse(company_id).currency_id.symbol
+
+        #Loop and serialize data in to a list
         for i in data:
-            if i[11]:
-                if i[11]=='percent' and not i[11]:
+            #Check for tax and compute price based on tax data
+            if i[9]:
+                if i[9]=='percent' and not i[11]:
                     price = i[5] + (i[10]*i[5]/100)
-                elif not i[11]=='percent' and not i[11]:
+                else:
                     price = i[5] + i[10]
             else:
                 price = i[5]
+            #Create a dict to add in a list
             datarow={
                 "id":i[0],
-                "default_code":i[1] or False,
-                "code":i[2] or False,
-                "name":i[3] or False,
-                "description":i[4] or False,
-                "price": price,
+                "default_code":i[1] or '',
+                "code":i[2] or '',
+                "name":i[3] or '',
+                "description":i[4] or '',
+                "price": price or 0,
                 "qty":i[7] or 0,
                 "currency":currency or False,
-                "branch": i[13] if 13 < len(i) else '',
-                "salescount": 0,
+                "branch": i[15] if 15 < len(i) else '',
+                "salescount": i[13] or 0,
                 'image_url_128': base_url + str(i[0]) + "/image_128",
                 'image_url_512': base_url + str(i[0]) + "/image_512"
             }
             return_value.append(datarow)
 
+        # #Serialize Data using Odoo ORM
         # for id in search_ids.ids:
         #     product = self.env['product.template'].browse(id)
 
@@ -267,6 +308,7 @@ class cBizProductService(Component):
     def _validator_mobile(self):
         return {
             "cargo_branch_id": {"type": "string", "required": False},
+            "company_id": {"type": "string", "required": False},
             "code": {"type": "string", "required": False, "nullable": True}
         }
 

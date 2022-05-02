@@ -222,7 +222,7 @@ class cBizSaleOrderService(Component):
             if 'code' in order_line_item:
                 order_line_item['product_id'] = self.env['product.template'].search([('code','=',order_line_item['code'])]).id
             if 'id' in order_line_item:
-                order_line_item['product_id'] = self.env['product.template'].browse(order_line_item['id']).id
+                order_line_item['product_id'] = self.env['product.template'].browse(int(order_line_item['id'])).id
             if 'product_uom_qty' not in order_line_item:
                 order_line_item['product_uom_qty'] = 1
             for order_line_data in sale_order_line_fields:

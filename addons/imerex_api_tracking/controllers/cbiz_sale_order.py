@@ -191,7 +191,7 @@ class cBizSaleOrderService(Component):
             if test_branch_in_company:
                 raise ValidationError('Branch is required in the given Company!')
 
-        #default bank journal ID of company
+        #Default bank journal ID of company
         if 'payment_journal_id' not in values:
             default_id = self.env['account.journal'].search([('company_id','=',values['company_id']),('type','=','bank')]).ids
             values['payment_journal_id'] = default_id[0] 

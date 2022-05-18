@@ -1,0 +1,3 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_cbiz_api","cbiz_api group_erp_manager","model_cbiz_api","base.group_erp_manager",1,1,1,1
+"access_cbiz_api_cargoapi","cbiz_api_cargoapi group_erp_manager","model_cbiz_api_cargoapi","base.group_erp_manager",1,1,1,1

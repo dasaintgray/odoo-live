@@ -64,7 +64,7 @@ class AccountChartOfAccountReport(models.AbstractModel):
         new_options['unfold_all'] = True
         options_list = self._get_options_periods_list(new_options)
         accounts_results, taxes_results = self.env['account.general.ledger']._do_query(options_list, fetch_lines=False)
-
+        names = []
         lines = []
         totals = [0.0] * (2 * (len(options_list) + 2) + 1)
 
@@ -112,16 +112,36 @@ class AccountChartOfAccountReport(models.AbstractModel):
                 columns.append({'name': self.format_value(value, blank_if_zero=True), 'class': 'number', 'no_format_name': value})
 
             name = account.name_get()[0][1]
+            if name not in names:
+                lines.append({
+                    'id': account.id,
+                    'name': name,
+                    'title_hover': name,
+                    'columns': columns,
+                    'unfoldable': False,
+                    'caret_options': 'account.account',
+                    'class': 'o_account_searchable_line o_account_coa_column_contrast',
+                })
+                names.append(name)
+            else:
+                get_line = self.build_dict(lines, key="name")
+                get_index = get_line.get(name)
+                for i in range(len(columns)):
+                    lines[get_index['index']]['columns'][i]['no_format_name'] += columns[i]['no_format_name']
+                    lines[get_index['index']]['columns'][i]['name'] = self.format_value(lines[get_index['index']]['columns'][i]['no_format_name'], blank_if_zero=True)
 
-            lines.append({
-                'id': account.id,
-                'name': name,
-                'title_hover': name,
-                'columns': columns,
-                'unfoldable': False,
-                'caret_options': 'account.account',
-                'class': 'o_account_searchable_line o_account_coa_column_contrast',
-            })
+        #Initialize original data and data for manipulation
+        get_lines = self.build_dict(lines, key="name")
+        test_lines = self.build_dict(lines, key="name")
+        for line in get_lines:
+            #Remove lines with zero netmovement
+            if get_lines[line]['columns'][6]['no_format_name'] == 0:
+                test_lines.pop(line)
+        lines = []
+
+        #return the dict to list
+        for line in test_lines:
+            lines.append(test_lines[line])
 
         # Total report line.
         lines.append({
@@ -131,9 +151,11 @@ class AccountChartOfAccountReport(models.AbstractModel):
              'columns': [{'name': self.format_value(total), 'class': 'number'} for total in totals],
              'level': 1,
         })
-
         return lines
 
     @api.model
     def _get_report_name(self):
         return _("Trial Balance with Net Movement")
+
+    def build_dict(self,seq, key):
+        return dict((d[key], dict(d, index=index)) for (index, d) in enumerate(seq))

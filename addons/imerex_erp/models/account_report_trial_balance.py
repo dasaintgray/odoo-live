@@ -136,7 +136,7 @@ class AccountChartOfAccountReport(models.AbstractModel):
         for line in get_lines:
             #Remove lines with zero netmovement
             if get_lines[line]['columns'][6]['no_format_name'] == 0:
-                test_lines.pop(line)
+                test_lines
         lines = []
 
         #return the dict to list

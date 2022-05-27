@@ -14,6 +14,24 @@ class cBizCargoAPI(models.Model):
     Internal Class for Cargo Integration
     """
 
+    def cargo_transaction_get(self,qrcode):
+        api_headers = self.env['cbiz.api'].api_headers()
+        headers = api_headers['transaction_url'] + str(qrcode)
+        api_request = requests.get(headers, headers=api_headers['headers'])
+        api_type = "qrbarcode"
+        if not api_request.json():
+            headers = api_headers['transaction_trackhawb'] + str(qrcode)
+            api_request = requests.get(headers, headers=api_headers['headers'])
+            api_type = "hawb"
+        response = api_request.json()
+        return [response, api_type]
+
+    def shipping_track_automation(self,body,name):
+        """transaction tracking"""
+        orders = self.env['sale.order'].search([("name","=",name)])
+        orders.message_post(body=body,message_type="comment", subtype_xmlid="mail.mt_comment")
+        orders
+
     def cargo_create_shipper(self,values):
         apicargo = self.env['cbiz.api'].api_headers()
         #check if in posession of JWT token

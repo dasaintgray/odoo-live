@@ -20,7 +20,6 @@ class cBizCargoJWT(models.Model):
         if not jwt_url_base:
             raise ValidationError("No CircuitTrack JWT URL configured in General Settings!")
         jwt_url = jwt_url_base + "/api/login"
-        res_config = self.env['res.config.']
         jwt_body_auth = {
             "Username": self.env['ir.config_parameter'].sudo().get_param('imerex_api_username'),
             "Password": self.env['ir.config_parameter'].sudo().get_param('imerex_api_password')
@@ -61,12 +60,13 @@ class cBizCargoJWT(models.Model):
             'shipper_url' : domain + '/shippers/',
             'shipper_refresh_url' : domain + '/shippers-refresh/',
             'transaction_url': domain + '/transaction-track/',
+            'transaction_trackhawb': domain + '/transaction-trackhawb/',
             'token' : token.access_token,
             'headers' : {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token.access_token
             }
-        } 
+        }
         return api_cargo
 
     def api_validation(self,api_request):

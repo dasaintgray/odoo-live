@@ -9,28 +9,26 @@ class SaleOrder(models.Model):
     """inherited sale order"""
     _inherit = 'sale.order'
 
-    @api.model
+    branch_id = fields.Many2one("res.branch", string='Branch', store=True,
+                                readonly=False,
+                                compute="_compute_branch",
+                                domain=lambda self: self._get_branch_id()
+                                )
+    warehouse_id = fields.Many2one(
+        'stock.warehouse', string='Warehouse',
+        required=True, readonly=True, states={'draft': [('readonly', False)],
+                                              'sent': [('readonly', False)]},
+        default=lambda self: self._default_warehouse_id(), check_company=True,
+        )
+
     def _default_warehouse_id(self):
         """methode to get default warehouse id"""
         # !!! Any change to the default value may have to be repercuted
         # on _init_column() below.
         return self.env.user._get_default_warehouse_id()
 
-    @api.model
     def _get_branch_id(self):
         return ['&',('id', 'in',self.env.user.branch_ids.ids),('company_id','=',self.env.company.id)]
-
-    branch_id = fields.Many2one("res.branch", string='Branch', store=True,
-                                readonly=False,
-                                compute="_compute_branch",
-                                domain=_get_branch_id
-                                )
-    warehouse_id = fields.Many2one(
-        'stock.warehouse', string='Warehouse',
-        required=True, readonly=True, states={'draft': [('readonly', False)],
-                                              'sent': [('readonly', False)]},
-        default=_default_warehouse_id, check_company=True,
-        )
 
     @api.depends('company_id')
     def _compute_branch(self):

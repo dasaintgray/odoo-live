@@ -11,19 +11,21 @@
                                 <span class="s_parallax_bg oe_img_bg" style="background-image: url('/web/image/website.s_banner_default_image'); background-position: 50% 0;"/>
                                 <div class="o_we_bg_filter bg-black-50"/>
                                 <div class="container">
-                                    <h1>Cargo Tracking</h1>
+                                    <h1 text="center">Cargo Tracking</h1>
                                 </div>
                         </section>
                     </div>
                     <div class="container">
+                        <br />
                         <h3 class="text-center">
                             <t t-set="item" t-value="hawbnum"/>
                             <t t-esc="item"/>
                         </h3>
+                        <br />
                         <form class="mt8" role="search" t-attf-action="/tracking/" method="get">
                             <t t-call="imerex_api_tracking.tracking_search_box"/>
                         </form>
-                        <div t-if="not cargoapi" class="alert alert-warning mt8" role="alert">
+                        <div t-if="not cargoapi" class="col-lg-8 offset-lg-2" role="alert">
                             <p><center>Search for your Cargo with a Barcode Number or HAWB</center></p>
                         </div>
                         <div t-else="" class="table-responsive">
@@ -64,6 +66,7 @@
                         </div>
                     </div>
                 </div>
+                <br />
             </t>
         </section>
     </template>
@@ -75,7 +78,7 @@
                 <form class="mt8" role="search" t-attf-action="/tracking/" method="get">
                     <t t-call="imerex_api_tracking.tracking_search_box"/>
                 </form>
-                <div t-if="not cargoapi" class="alert alert-warning mt8" role="alert">
+                <div t-if="not cargoapi" class="col-lg-8 offset-lg-2" role="alert">
                     <p><center>Search for your Cargo with a Barcode Number or HAWB</center></p>
                 </div>
             </div>

@@ -35,7 +35,7 @@ class cBizCargoJWT(models.Model):
             raise ValidationError("CircuitTrack API Authentication Failed!")
         jwt_response = jwt_request.json()
         jwt_id = self.search([]).id
-        if self.search([]).access_token:
+        if self.search([]):
             self.env.cr.execute(_("""
                 DELETE FROM cbiz_api WHERE id=%s;
             """,jwt_id))

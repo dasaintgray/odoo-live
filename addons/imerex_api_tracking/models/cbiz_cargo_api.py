@@ -2,17 +2,28 @@
 
 from odoo import fields, models, api, _
 from odoo.tools.misc import unique
+from odoo.tools import date_utils
 from odoo.exceptions import ValidationError
 from datetime import datetime
+from odoo.http import Response
 import json
 import requests
-import sys
 
 class cBizCargoAPI(models.Model):
     _name='cbiz.api.cargoapi'
     _description="""Cargo API
     Internal Class for Cargo Integration
     """
+    def alternative_json_response(request, result=None, error=None):
+        if error is not None:
+            response = error
+        if result is not None:
+            response = result
+        mime = 'application/json'
+        body = json.dumps(response, default=date_utils.json_default)
+        return Response(body, status=error and error.pop('http_status', 200) or 200,
+            headers=[('Content-Type', mime), ('Content-Length', len(body))]
+        )
 
     def cargo_transaction_get(self,qrcode):
         api_headers = self.env['cbiz.api'].api_headers()

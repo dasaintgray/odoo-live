@@ -37,8 +37,15 @@ class cBizCargoAPI(models.Model):
         response = api_request.json()
         return [response, api_type]
 
-    def shipping_track_automation(self,body,name):
+    def shipping_track_automation(self):
         """transaction tracking"""
+        orders = self.env['sale.order'].search([("name","=",name),("state","=","draft"),("company_id","=",2)])
+        for order in orders:
+            order.action_confirm()
+
+    def sale_order_automation(self,body,name):
+        """Sale Order Automation"""
+        
         orders = self.env['sale.order'].search([("name","=",name)])
         orders.message_post(body=body,message_type="comment", subtype_xmlid="mail.mt_comment")
         orders
@@ -227,9 +234,10 @@ class cBizCargoAPI(models.Model):
                 'mobile': cargo_get_shipper['shipperMobileNo'] or False,
                 'vat': cargo_get_shipper['residenceIdNumber'] or False,
                 'email': cargo_get_shipper['emailaddress'] or False,
-                'loyalty_id': 8800000000000 + cargo_get_shipper['shipperId'],
+                'loyalty_id': 8900000000000 + cargo_get_shipper['shipperId'],
                 'branch_id': False
             }
+
             create_partner = self.env['res.partner'].create(values)
             if cargo_get_shipper['appusername'] and cargo_get_shipper['appuserpass']:
                 #Create user from create_partner

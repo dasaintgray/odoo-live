@@ -1,3 +1,4 @@
+import base64
 from re import I
 from odoo.exceptions import ValidationError
 from odoo import http, _
@@ -63,6 +64,17 @@ class cBizTracking(Component):
 
 class Tracking(http.Controller):
 
+    @http.route(['/transaction/hawb/<string:search>'],  type='http', auth='public', method=['GET'], csrf = False, website=True)    
+    def transaction_hawb(self, **kw):
+        
+        #Getting the search string from URI
+        hawb = kw["search"]
+        #Declaring Cargo 1 link address 
+        return_text = request.env['sale.order'].sudo().search([('name', '=', hawb)]).name
+
+        request._json_response = request.env['cbiz.api.cargoapi'].sudo().alternative_json_response.__get__(request, JsonRequest)
+        return return_text
+
     @http.route(['/tracking/<string:search>','/tracking'], auth='public', website=True)
     def index(self, **kw):
         #initialize variable
@@ -77,9 +89,30 @@ class Tracking(http.Controller):
                 if api_request[0]:
                     cargoapi = api_request
                 else:
-                    http_content.update({
-                        "hawbnum": "No Box with given Barcode or HAWB"
-                    })
+                    cargo1api = "https://cargoapi1.imerex.com.ph/api/CargoStatus/?paramId=TE05aXgzaGxhU0ZXaHBZWnJxeXNJbGJ1YWZlc250TVprMEE1NGh3WERMUWFpRTJuZGFibW92VVdQNXlNQWNYeTRTNFl6UDRDNEZGbEhWREhYYm02bWtUcnpvYWJjUkhtMnNXSnJOaFppd3VTNlkwcDhJZzVsN0tKR1lIQkhpRU4wTUJCZCt5d1FOeHRqSkpPakFtUThnZHRXM05sK0F4T0JBR0k5dDh4ZjE0PQ%3D%3D&hawb=" + kw['search']
+                    cargo_details = []
+                    cargo_items = ""
+                    cargo1api_response = requests.get(cargo1api)
+                    cargo1api_result = cargo1api_response.json()
+                    if cargo1api_result:
+                        for details in cargo1api_result['packageInfoDTO']:
+                            cargo_items += details['packageName'] + " & "
+                            
+                        cargo_items = cargo_items[:len(cargo_items) - 3]
+                        for details in cargo1api_result['cargo_StatusDTO']:
+                            cargo_details.append({
+                                'hawbnum': kw['search'],
+                                'transferdate': details['processdate'],
+                                'statusname': details['statusText'],
+                                'statusText': cargo_items})
+                        cargoapi = [
+                            cargo_details,
+                            'qrbarcode'
+                        ]
+                    if not cargoapi:
+                        http_content.update({
+                            "hawbnum": "No Box with given Barcode or HAWB"
+                        })
         #Create Dictionary compatible with imerex_api_tracking.index template
         #Check if cargoapi has value
         if cargoapi:
@@ -92,7 +125,7 @@ class Tracking(http.Controller):
                     "searchtype": cargoapi[1]
                 })
         #Return value for rendering website
-        return http.request.render('imerex_api_tracking.index', http_content)
+        return request.render('imerex_api_tracking.index', http_content)
 
     @http.route(['/tracking/auth'],  type='json', auth='public', method=['POST'], csrf = False, website=True)
     def track_authentication(self, **kw):
@@ -115,11 +148,12 @@ class Tracking(http.Controller):
         
         #Getting the search string from URI
         hawb = kw["search"]
-        
+        #Declaring Cargo 1 link address 
         cargo1api = "https://cargoapi1.imerex.com.ph/api/CargoStatus/?paramId=TE05aXgzaGxhU0ZXaHBZWnJxeXNJbGJ1YWZlc250TVprMEE1NGh3WERMUWFpRTJuZGFibW92VVdQNXlNQWNYeTRTNFl6UDRDNEZGbEhWREhYYm02bWtUcnpvYWJjUkhtMnNXSnJOaFppd3VTNlkwcDhJZzVsN0tKR1lIQkhpRU4wTUJCZCt5d1FOeHRqSkpPakFtUThnZHRXM05sK0F4T0JBR0k5dDh4ZjE0PQ%3D%3D&hawb=" + hawb
         cargo1api_response = requests.get(cargo1api)
         cargo1api_result = cargo1api_response.json()
         return_text = ""
+        #Diplaying text results
         if cargo1api_result:
             return_text += "Process Date:\n" + cargo1api_result['cargo_StatusDTO'][0]['processdate'] + "\nStatus:\n" + cargo1api_result['cargo_StatusDTO'][0]['statusText'] + "\n\n"
         else:
@@ -141,3 +175,15 @@ class Tracking(http.Controller):
                 return_text += "\n" + domain  + "/tracking/?search=" + hawb
         request._json_response = request.env['cbiz.api.cargoapi'].sudo().alternative_json_response.__get__(request, JsonRequest)
         return return_text
+
+    #@http.route(['/skedbox/<string:search>'],  type='http', auth='public', method=['POST'], csrf = False, website=True)    
+    #def sked_box(self, **kw):
+
+    @http.route(['/complaints'],  type='json', auth='public', method=['POST'], csrf = False, website=True)    
+    def complaints(self, **kw):
+        data = request.httprequest.data
+        data_in_dict = json.loads(data)
+        request.httprequest.data = ''
+        request._json_response = request.env['cbiz.api.cargoapi'].sudo().alternative_json_response.__get__(request, JsonRequest)
+        return []
+        

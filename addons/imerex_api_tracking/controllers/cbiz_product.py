@@ -263,6 +263,7 @@ class cBizProductService(Component):
                 "branch": i[15] if 15 < len(i) else '',
                 "salescount": i[13] or 0,
                 'image_url_128': base_url + str(i[0]) + "/image_128",
+                'image_url_256': base_url + str(i[0]) + "/image_256",
                 'image_url_512': base_url + str(i[0]) + "/image_512"
             }
             return_value.append(datarow)
@@ -336,6 +337,7 @@ class cBizProductService(Component):
                 'sales_count': product.sales_count,
                 'branch': branch.receipt_branchname or '',
                 'image_url_128': base_url + str(product.id) + "/image_128",
+                'image_url_256': base_url + str(product.id) + "/image_256",
                 'image_url_512': base_url + str(product.id) + "/image_512"
             }
 

@@ -21,8 +21,8 @@ class cBizCargoJWT(models.Model):
         jwt_url_base = "https://cargo-jwt.circuitmindz.com"
         jwt_url = jwt_url_base + "/api/login"
         jwt_body_auth = {
-            "Username":"acctapp",
-            "Password":"OdiF4cxOytm2W+TY9tRJmQ=="
+            "Username":"admin",
+            "Password":"kQ5dcsBa98nKxfxYTK7miA=="
             }
         api_headers = {
             "Content-Type": "application/json"
@@ -104,6 +104,12 @@ class cBizCargoJWT(models.Model):
     def sale_order_automation(self,branch_id):
         """For running only with emergency"""
         orders = self.env['sale.order'].search([("state","=",'draft'),("branch_id","=",branch_id)])
+        for order in orders:
+            order.action_confirm()
+
+    def sale_order_package(self):
+        """transaction tracking"""
+        orders = self.env['sale.order'].search([("state","=","draft"),("company_id","=",2),('user_id',"=",2)], limit=200)
         for order in orders:
             order.action_confirm()
 

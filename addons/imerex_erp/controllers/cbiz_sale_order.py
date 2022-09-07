@@ -193,7 +193,7 @@ class cBizSaleOrderService(Component):
 
         #default bank journal ID of company
         if 'payment_journal_id' not in values:
-            default_id = self.env['account.journal'].search([('company_id','=',values['company_id']),('type','=','bank')]).ids
+            default_id = self.env['account.journal'].search([('company_id','=',values['company_id']),('type','=','cash'),('name','like','Head Office')]).ids
             values['payment_journal_id'] = default_id[0] 
 
         sale_order_fields = self._sale_order_fields()

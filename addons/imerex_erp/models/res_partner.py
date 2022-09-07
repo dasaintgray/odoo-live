@@ -101,7 +101,7 @@ class ResPartner(models.Model):
     def write(self, vals):
         #Do not change Address/Contact Type if Shipper
         if self.shipper_id:
-            vals['loyalty_id'] = 8800000000000 + int(self.shipper_id)
+            vals['loyalty_id'] = 8900000000000 + int(self.shipper_id)
             try:
                 if not self.type == vals['type']:
                     raise ValidationError("Already Synced as a Shipper in CircuitTrack! you cannot edit address type")
@@ -113,12 +113,12 @@ class ResPartner(models.Model):
             sync = self.env['cbiz.api.cargoapi'].cargo_create_shipper(self)
             if sync.text:
                 vals['shipper_id'] = sync.text
-                vals['loyalty_id'] = 8800000000000 + int(sync.text)
+                vals['loyalty_id'] = 8900000000000 + int(sync.text)
 
         #if shipper with shipper_id, will update data in shipper service CircuitTrack
         elif self.type == 'shipper':
             sync = self.env['cbiz.api.cargoapi'].cargo_update_shipper(vals,self)
-            vals['loyalty_id'] = 8800000000000 + int(self.shipper_id)
+            vals['loyalty_id'] = 8900000000000 + int(self.shipper_id)
             
         partners = super(ResPartner, self).write(vals)
         return partners

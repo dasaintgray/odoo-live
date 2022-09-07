@@ -191,7 +191,7 @@ class cBizSaleOrderService(Component):
             if test_branch_in_company:
                 raise ValidationError('Branch is required in the given Company!')
 
-        #default bank journal ID of company
+        #Default bank journal ID of company
         if 'payment_journal_id' not in values:
             default_id = self.env['account.journal'].search([('company_id','=',values['company_id']),('type','=','cash'),('name','like','Head Office')]).ids
             values['payment_journal_id'] = default_id[0] 
@@ -221,6 +221,8 @@ class cBizSaleOrderService(Component):
             order_line_values={}
             if 'code' in order_line_item:
                 order_line_item['product_id'] = self.env['product.template'].search([('code','=',order_line_item['code'])]).id
+            if 'id' in order_line_item:
+                order_line_item['product_id'] = self.env['product.template'].browse(int(order_line_item['id'])).id
             if 'product_uom_qty' not in order_line_item:
                 order_line_item['product_uom_qty'] = 1
             for order_line_data in sale_order_line_fields:
@@ -243,6 +245,7 @@ class cBizSaleOrderService(Component):
     def _validator_create(self):
         schema = {
             "code": {"type": "string"},
+            "id": {},
             "product_uom_qty": {"type": "float"},
             "price_unit": {"type": "float"}
         }

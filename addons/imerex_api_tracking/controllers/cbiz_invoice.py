@@ -1,6 +1,4 @@
 
-from http.client import OK
-from odoo import _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
 from odoo.exceptions import ValidationError

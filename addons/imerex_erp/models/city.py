@@ -52,6 +52,7 @@ class CountryState(models.Model):
     _inherit = "res.country.state"
 
     city_ids = fields.One2many("imerex_erp.city", "state_id", "Cities")
+
 class Company(models.Model):
     """Model Company
     _get_company_address_fields - Addendum to original def

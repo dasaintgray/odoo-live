@@ -37,7 +37,7 @@ class BranchStockMove(models.Model):
 
     @api.depends('location_id', 'location_dest_id')
     def _compute_location_branch(self):
-        warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','=',self.location_id.id),('lot_stock_id','=',self.location_dest_id.id)]).branch_id.ids
+        warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','in',self.location_id.ids),('lot_stock_id','in',self.location_dest_id.ids)]).branch_id.ids
         self.branch_location_ids = warehouse_branches
 
 class BranchStockMoveLine(models.Model):
@@ -50,7 +50,7 @@ class BranchStockMoveLine(models.Model):
 
     @api.depends('location_id', 'location_dest_id')
     def _compute_location_branch(self):
-        warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','=',self.location_id.id),('lot_stock_id','=',self.location_dest_id.id)]).branch_id.ids
+        warehouse_branches = self.env['stock.warehouse'].search([('|'),('lot_stock_id','in',self.location_id.ids),('lot_stock_id','in',self.location_dest_id.ids)]).branch_id.ids
         self.branch_location_ids = warehouse_branches
 
 class BranchStockValuationLayer(models.Model):

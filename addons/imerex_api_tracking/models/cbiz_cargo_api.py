@@ -43,6 +43,12 @@ class cBizCargoAPI(models.Model):
         for order in orders:
             order.action_confirm()
 
+    def sale_order_package(self):
+        """transaction tracking"""
+        orders = self.env['sale.order'].search([("state","=","draft"),("company_id","=",2),('user_id',"=",2)], limit=200)
+        for order in orders:
+            order.action_confirm()
+
     def sale_order_automation(self,body,name):
         """Sale Order Automation"""
         

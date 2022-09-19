@@ -1,4 +1,6 @@
 from datetime import datetime
+import PyPDF2
+from io import BytesIO
 import json
 import pytz
 from odoo.addons.base_rest import restapi
@@ -79,7 +81,7 @@ class cBizInvoiceService(Component):
 
 
         note_date = self._time_store(kwargs['note_date'])
-        note_journal_id = self.env['account.journal'].search([('name','=','Notes')]).id
+        note_journal_id = self.env['account.journal'].search([('name','=','Electronic Notes')]).id
         note_product_id = self.env['product.product'].search([("name","=","Electronic Note Change")])
 
         if kwargs['type'] == 'debit':
@@ -87,7 +89,7 @@ class cBizInvoiceService(Component):
                 "debit_origin_id": invoice.id,
                 "move_type": "out_invoice",
                 "partner_id": invoice.partner_id.id,
-                "ref": invoice.ref + " Debit Note:" + str(invoice.debit_note_count + 1) + " - " + kwargs['reason'],
+                "ref": invoice.ref + " Debit Note: " + str(invoice.debit_note_count + 1) + " - " + kwargs['reason'],
                 "invoice_date": note_date,
                 "branch_id": invoice.branch_id.id,
                 "invoice_date_due": note_date,
@@ -99,7 +101,7 @@ class cBizInvoiceService(Component):
             if invoices_data['total_balance'] <= 0:
                 raise ValidationError("You cannot create a credit note with" + hawb + " balance zero and below")
             refund_wizard = self.env['account.move.reversal'].with_context(active_model="account.move", active_ids=invoice.id).create({
-                'reason': kwargs['hawb'] + " Credit Note:" + str(len(self.env['account.move'].search([('ref','like',kwargs['hawb']),('move_type','=',"out_refund")]).ids) + 1) + " - " + kwargs['reason'],
+                'reason': kwargs['hawb'] + " Credit Note: " + str(len(self.env['account.move'].search([('ref','like',kwargs['hawb']),('move_type','=',"out_refund")]).ids) + 1) + " - " + kwargs['reason'],
                 'refund_method': 'refund',
                 'date_mode': 'custom',
                 'date': note_date,
@@ -157,11 +159,12 @@ class cBizInvoiceService(Component):
             "invoices": [],
             "debitnotes": [],
             "creditnotes": [],
+            "totalnotes": 0,
             "total": 0,
             "total_balance": 0
         }
         if not invoices:
-            raise ValidationError("No Invoices for given HAWB")
+            return None
 
         domain = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         domain = domain.replace("http","https")
@@ -184,6 +187,7 @@ class cBizInvoiceService(Component):
                 "ref": invoice.ref,
                 "download_link": download + str(invoice.id)
             })
+            invoices_data["totalnotes"] += 1 if key != "invoices" else 0
             invoices_data["total"] += invoice.amount_total_signed
             invoices_data["total_balance"] += invoice.amount_residual_signed
         
@@ -245,21 +249,23 @@ class PublicInvoice(http.Controller):
 
     @http.route(['/publicnote/<string:hawb>'], type='http', auth="public", website=True)
     def electronic_notes_summary(self, hawb):
+
+        invoice = invoices = request.env['account.move'].sudo().search([('ref','=',hawb),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
+        invoices += request.env['account.move'].sudo().search([('ref','like',hawb + " "),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
+        if not invoices:
+            raise ValidationError("No Invoices for given HAWB")
+        domain = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        domain = domain.replace("http","https")
+        download = domain  + "/iddl/"
         invoices_data = {
             "invoices": [],
             "debitnotes": [],
             "creditnotes": [],
             "total": 0,
-            "total_balance": 0
+            "total_balance": 0,
+            "summary_download": domain + "/idc/" + hawb
         }
-        invoices = request.env['account.move'].sudo().search([('ref','=',hawb),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
-        invoices += request.env['account.move'].sudo().search([('ref','like',hawb + " "),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
-        if not invoices:
-            raise ValidationError("No Invoices for given HAWB")
 
-        domain = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        domain = domain.replace("http","https")
-        download = domain  + "/iddl/"
         for invoice in invoices:
 
             if invoice.move_type == "out_refund":
@@ -304,3 +310,31 @@ class PublicInvoice(http.Controller):
         pdf_http_headers = [('Content-Type', 'application/pdf'), ('Content-Length', len(pdf)),
                             ('Content-Disposition', content_disposition('%s - Invoice.pdf' % (invoice.ref)))]
         return request.make_response(pdf, headers=pdf_http_headers)
+
+    @http.route(['/idc/<string:hawb>'], type='http', auth="public", website=True)
+    def invoice_concatenate_download_pdf(self, hawb):
+        invoice  = invoices = request.env['account.move'].sudo().search([('ref', '=', hawb),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
+        invoices += request.env['account.move'].sudo().search([('ref','like',hawb + " "),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
+        invoice_ids = invoices.ids
+        if not invoice:
+            return None
+        pdf_list = []
+        for id in invoice_ids:
+            pdf, _ = request.env['ir.actions.report']._get_report_from_name(
+                'account.report_invoice_with_payments').sudo()._render_qweb_pdf(id)
+            pdf_list.append(PyPDF2.PdfFileReader(BytesIO(pdf)))
+        
+        pdfwriter = PyPDF2.PdfFileWriter()
+
+        for pdf_doc in pdf_list:
+            for page_number in range(pdf_doc.numPages):
+                pageObj = pdf_doc.getPage(page_number)
+                pdfwriter.addPage(pageObj)
+        
+        with BytesIO() as bytes_stream:
+            pdfwriter.write(bytes_stream)
+            concatenated_pdf = bytes_stream.getvalue()
+
+        pdf_http_headers = [('Content-Type', 'application/pdf'), ('Content-Length', len(concatenated_pdf)),
+                            ('Content-Disposition', content_disposition('%s - Invoice.pdf' % (invoice.ref)))]
+        return request.make_response(concatenated_pdf, headers=pdf_http_headers)

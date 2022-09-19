@@ -113,6 +113,7 @@ class cBizSaleOrderService(Component):
 
                 #     #Log a note in the cancelled invoice
                 #     log_note += " - Reverse Entry: " + credit_note.name
+
                 log_note += " - Reverse Entry: " + refund_wizard.new_move_ids.name
 
             #Log a note in the cancelled invoice

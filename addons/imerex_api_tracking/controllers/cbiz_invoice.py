@@ -250,8 +250,6 @@ class PublicInvoice(http.Controller):
             "debitnotes": [],
             "creditnotes": [],
             "total": 0,
-            "total_paid": 0,
-            "total_credit_note_payment": 0,
             "total_balance": 0
         }
         invoices = request.env['account.move'].sudo().search([('ref','=',hawb),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
@@ -266,20 +264,14 @@ class PublicInvoice(http.Controller):
 
             if invoice.move_type == "out_refund":
                 key = "creditnotes"
-                if invoice.amount_residual == 0:
-                    # invoices_data["invoices"][0]["balance"] -= invoice.amount_total_signed
-                    invoices_data["total_paid"] += invoice.amount_total_signed
-                    invoices_data["total_credit_note_payment"] += invoice.amount_total
             elif invoice.move_type == "out_invoice" and invoice.ref == hawb:
                 key = "invoices"
-                invoices_data["total_paid"] += invoice.amount_total_signed - invoice.amount_residual_signed
             else:
                 key = "debitnotes"
-                invoices_data["total_paid"] += invoice.amount_total_signed - invoice.amount_residual_signed
             invoices_data[key].append({
                 "name": invoice.name,
                 "total": invoice.amount_total_signed,
-                "balance": invoice.amount_residual_signed, #if key != "creditnotes" else invoice.amount_total_signed,
+                # "balance": invoice.amount_residual_signed,
                 "date_created": fields.Datetime.to_string(invoice.invoice_date),
                 "ref": invoice.ref,
                 "download_link": download + str(invoice.id)

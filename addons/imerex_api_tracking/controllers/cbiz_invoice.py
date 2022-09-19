@@ -144,8 +144,14 @@ class cBizInvoiceService(Component):
                 "company_id": kwargs["company_id"]
             }])
             payment.action_create_payments()
-        note_data = note.read()[0]
-        return note_data
+        return {
+            "id": note.id,
+            "name": note.name,
+            "total": note.amount_total_signed,
+            "date_created": fields.Datetime.to_string(note.invoice_date),
+            "total_balance": note.amount_residual_signed,
+            "ref": note.ref
+        }
 
 
     @restapi.method(

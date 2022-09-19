@@ -5,5 +5,5 @@ from . import cbiz_invoice
 from . import cbiz_journal
 from . import cbiz_payment
 from . import cbiz_product
-from . import cbiz_sale_order
+from . import cbiz_transaction
 from . import routes

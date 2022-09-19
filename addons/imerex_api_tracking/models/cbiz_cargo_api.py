@@ -278,3 +278,32 @@ class cBizCargoAPI(models.Model):
             'street','street2','brgy','city','state_id','country_id','zip'
         ]
         return address_fields
+    
+    def cargo_payment_method(self, pay, company_id=1):
+        if pay == "bank":
+            default_id = self.env['account.journal'].search([('company_id','=',company_id),('type','=','bank'),('name','like','Bank')]).ids
+        elif pay == "stcpay":
+            default_id = self.env['account.journal'].search([('company_id','=',company_id),('type','=','bank'),('name','like','STC Pay')]).ids
+        else:
+            default_id = self.env['account.journal'].search([('company_id','=',company_id),('type','=','cash'),('name','like','Head Office')]).ids
+        return default_id
+
+    def balance_check(self, invoices):
+        invoices_data = {
+            "invoices": [],
+            "total": 0,
+            "total_balance": 0
+        }
+        for invoice in invoices:
+            invoices_data["invoices"].append({
+                "id": invoice.id,
+                "total": invoice.amount_total_signed,
+                "name": invoice.name,
+                "ref": invoice.ref,
+                "balance": invoice.amount_residual_signed,
+                "object": invoice
+            })
+            invoices_data["total"] += invoice.amount_total_signed
+            invoices_data["total_balance"] += invoice.amount_residual_signed
+
+        return invoices_data

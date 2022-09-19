@@ -98,3 +98,79 @@ class cBizPaymentService(Component):
             "amount": payment.amount
         }
         return res
+
+    @restapi.method(
+        [(['/hawb/'], "POST")],
+        input_param=restapi.CerberusValidator("_validator_create_v2"),
+        )
+    def cargo_v2_payments(self, **kwargs):
+        if "company_id" not in kwargs:
+            kwargs["company_id"] = 1
+        create_payment = self._create_payment_v2(kwargs)
+        return create_payment
+
+    def _create_payment_v2(self, values):
+        hawb = values['name']
+        payment_type = values['payment_type']
+        payment_date = values['payment_date']
+        payment_amount = values['amount']
+        payment_amount_balance = values['amount']
+        company_id = values['company_id']
+        invoices = self.env['account.move'].search([('ref','like',hawb),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
+        payment_journal_id = self.env['cbiz.api.cargoapi'].cargo_payment_method(payment_type)[0]
+        payment_return = []
+
+        if not invoices:
+            raise ValidationError("You cannot create a payment for a non-existing Invoice")
+
+        invoices_data = self.env['cbiz.api.cargoapi'].balance_check(invoices)
+
+        if (invoices_data['total_balance'] > 0 and payment_amount < 0) or (invoices_data['total_balance'] < 0 and payment_amount > 0):
+            raise ValidationError("Wrong payment amount, balance is: " + str(invoices_data['total_balance']))
+        else:
+            if abs(invoices_data['total_balance']) == 0:
+                raise ValidationError(hawb + ": No Balance")
+            if (abs(invoices_data['total_balance']) - abs(payment_amount)) < 0:
+                raise ValidationError(hawb + ": Overpayment")
+
+
+        for invoice in invoices_data['invoices']:
+            if abs(payment_amount_balance) > abs(invoice['balance']):
+                payment = invoice['balance']
+            else:
+                payment = payment_amount_balance
+            
+            if invoice['balance'] != 0 and payment_amount_balance > 0:
+                payment_amount_balance -= payment
+                payment = invoice['object'].env['account.payment.register'].with_context({
+                                "active_model":"account.move",
+                                "active_ids": invoice['id']
+                            }).create([{
+                                "payment_date": payment_date,
+                                "amount": abs(payment),
+                                "journal_id": payment_journal_id,
+                                "payment_method_id": 1,
+                                "company_id": company_id
+                            }])
+                payment.action_create_payments()
+                payment_return.append(self._return_response_payment_v2(payment,invoice))
+        return payment_return
+
+    def _validator_create_v2(self):
+        res = {
+            "payment_date":{"required": True},
+            "name":{"required": True},
+            "payment_type":{"type": "string", "required": True, "allowed": ["cash","bank","stcpay"]},
+            "amount":{"type": "float", "required": True},
+            "company_id": {"type":"integer", "empty": True}
+        }
+        return res
+
+    def _return_response_payment_v2(self,payment,invoice):
+        res = {
+            "name": invoice['name'],
+            "reference": invoice['ref'],
+            "balance": invoice['object'].amount_residual,
+            "amount": payment.amount
+        }
+        return res

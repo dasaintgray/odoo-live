@@ -33,11 +33,11 @@ class cBizSaleOrderService(Component):
         created_sale_order = self._create_sale_order(params)
         return created_sale_order
 
-    @restapi.method(
-        [(['/amendments/'], "POST")],
-        input_param=restapi.CerberusValidator("_validator_amendments"),
-        output_param=restapi.CerberusValidator("_validator_return_amendments")
-        )
+    # @restapi.method(
+    #     [(['/amendments/'], "POST")],
+    #     input_param=restapi.CerberusValidator("_validator_amendments"),
+    #     output_param=restapi.CerberusValidator("_validator_return_amendments")
+    #     )
     def amendments(self, **params):
         #Check for required Keys
         for key in ['name','date_order']:
@@ -193,8 +193,8 @@ class cBizSaleOrderService(Component):
 
         #Default bank journal ID of company
         if 'payment_journal_id' not in values:
-            default_id = self.env['account.journal'].search([('company_id','=',values['company_id']),('type','=','bank')]).ids
-            values['payment_journal_id'] = default_id[0] 
+            default_id = self.env['account.journal'].search([('company_id','=',values['company_id']),('type','=','cash'),('name','like','Head Office')]).ids
+            values['payment_journal_id'] = default_id[0]
 
         sale_order_fields = self._sale_order_fields()
         sale_order_values={}
@@ -214,28 +214,33 @@ class cBizSaleOrderService(Component):
         created_sale_order = self.env['sale.order'].create(sale_order_values)
 
         #create sales order_line and attach to sales order
-        sale_order_line_values=[]
         sale_order_line_fields = self._sale_order_line_fields()
+
         #serialize order_line fields
         for order_line_item in values['order_line']:
             order_line_values={}
+            order_line_item_name = False
             if 'code' in order_line_item:
                 order_line_item['product_id'] = self.env['product.template'].search([('code','=',order_line_item['code'])]).id
             if 'id' in order_line_item:
                 order_line_item['product_id'] = self.env['product.template'].browse(int(order_line_item['id'])).id
             if 'product_uom_qty' not in order_line_item:
                 order_line_item['product_uom_qty'] = 1
+            if 'description' in order_line_item:
+                order_line_item_name = order_line_item.pop('description')
             for order_line_data in sale_order_line_fields:
-                order_line_values.update({
-                    order_line_data: order_line_item[order_line_data]
-                })
+                if order_line_data in order_line_item:
+                    order_line_values.update({
+                        order_line_data: order_line_item[order_line_data]
+                    })
             order_line_values.update({
                 "order_id": created_sale_order.id
             })
             created_sale_order_lines = self.env['sale.order.line'].create(order_line_values)
-            sale_order_line_values.append({
-                created_sale_order_lines
-            })
+            if order_line_item_name:
+                created_sale_order_lines.write(
+                    {"name": order_line_item_name}
+                )
         #confirm the sales_order
         created_sale_order.action_confirm()
         #get return value to dict instead of model
@@ -247,7 +252,8 @@ class cBizSaleOrderService(Component):
             "code": {"type": "string"},
             "id": {},
             "product_uom_qty": {"type": "float"},
-            "price_unit": {"type": "float"}
+            "price_unit": {"type": "float"},
+            "description": {"type": "string", "empty": True}
         }
         res = {
             "name":{
@@ -321,6 +327,7 @@ class cBizSaleOrderService(Component):
             "product_id",
             "product_uom_qty",
             "price_unit",
+            "description"
             ]
         return cbiz_fields
 

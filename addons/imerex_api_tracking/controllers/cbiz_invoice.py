@@ -129,7 +129,7 @@ class cBizInvoiceService(Component):
         if pending_payments:
             if pending_payments['content']:
                 for i in pending_payments['content']:
-                    if i['journal_name'] == kwargs['hawb']:
+                    if kwargs['hawb'] in i['journal_name']:
                         note.js_assign_outstanding_line(i['id'])
 
         if not payment_fields_verification and kwargs['type'] == 'debit':

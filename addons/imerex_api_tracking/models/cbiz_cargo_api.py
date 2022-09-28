@@ -225,9 +225,9 @@ class cBizCargoAPI(models.Model):
                 if cargo_get_shipper['shipperphoto']:
                     image_1920 = cargo_get_shipper['shipperphoto'][18:]
 
-            full_name = cargo_get_shipper['shipperFirstName'] + cargo_get_shipper['shipperLastName']
+            full_name = cargo_get_shipper['shipperFirstName'] + " " + cargo_get_shipper['shipperLastName']
             if cargo_get_shipper['shipperExt']:
-                full_name += cargo_get_shipper['shipperExt']
+                full_name += " " + cargo_get_shipper['shipperExt']
             values = {
                 'type': 'shipper',
                 'image_1920': image_1920,

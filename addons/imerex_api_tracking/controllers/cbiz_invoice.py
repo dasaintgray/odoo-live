@@ -65,6 +65,9 @@ class cBizInvoiceService(Component):
         for key in payment_fields:
             if key not in kwargs:
                 payment_fields_verification.append(key)
+            else:
+                if not kwargs[key]:
+                    payment_fields_verification.append(key)
         
         if payment_fields_verification and payment_fields != payment_fields_verification:
             for field in payment_fields_verification:
@@ -161,20 +164,23 @@ class cBizInvoiceService(Component):
     def electronic_notes_summary(self, hawb):
         invoices = request.env['account.move'].sudo().search([('ref','=',hawb),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
         invoices += request.env['account.move'].sudo().search([('ref','like',hawb + " "),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
-        invoices_data = {
-            "invoices": [],
-            "debitnotes": [],
-            "creditnotes": [],
-            "totalnotes": 0,
-            "total": 0,
-            "total_balance": 0
-        }
         if not invoices:
             return None
 
         domain = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         domain = domain.replace("http","https")
         download = domain  + "/iddl/"
+
+        invoices_data = {
+            "invoices": [],
+            "debitnotes": [],
+            "creditnotes": [],
+            "totalnotes": 0,
+            "total": 0,
+            "total_balance": 0,
+            "summary_download": domain + "/idc/" + hawb
+        }
+
         for invoice in invoices:
 
             if invoice.move_type == "out_refund":
@@ -200,7 +206,7 @@ class cBizInvoiceService(Component):
         return invoices_data
 
     def _validator_electronic_notes_create(self):
-        date_format = lambda s: datetime.strptime(s, '%Y-%m-%d %H:%M:%S')
+        date_format = lambda s: datetime.strptime(s, '%Y-%m-%d %H:%M:%S') if s else None
         return {
             "type": {
                 "type": "string",
@@ -217,7 +223,7 @@ class cBizInvoiceService(Component):
                 "required": True
                 },
             "note_amount": {
-                "type": "integer",
+                "type": "float",
                 "required": True
             },
             "reason": {
@@ -227,15 +233,20 @@ class cBizInvoiceService(Component):
             "payment_date": {
                 "type": "datetime",
                 "empty": True,
+                "required": False,
+                "nullable": True,
                 "coerce": date_format
                 },
             "payment_amount": {
-                "type": "integer",
-                "empty": True
+                "type": "float",
+                "empty": True,
+                "required": False,
+                "nullable": True,
                 },
             "payment_type": {
-                "type": "string",
                 "empty": True,
+                "required": False,
+                "nullable": True,
                 "allowed": ["cash", "bank", "stcpay"]
                 }
         }

@@ -168,7 +168,7 @@ class cBizInvoiceService(Component):
             return None
 
         domain = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        domain = domain.replace("http","https")
+        # domain = domain.replace("http","https")
         download = domain  + "/iddl/"
 
         invoices_data = {
@@ -178,7 +178,7 @@ class cBizInvoiceService(Component):
             "totalnotes": 0,
             "total": 0,
             "total_balance": 0,
-            "summary_download": domain + "/idc/" + hawb
+            "summary_download": domain + "/idc/" + hawb + ".pdf"
         }
 
         for invoice in invoices:
@@ -272,7 +272,7 @@ class PublicInvoice(http.Controller):
         if not invoices:
             raise ValidationError("No Invoices for given HAWB")
         domain = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        domain = domain.replace("http","https")
+        # domain = domain.replace("http","https")
         download = domain  + "/iddl/"
         invoices_data = {
             "invoices": [],
@@ -280,7 +280,7 @@ class PublicInvoice(http.Controller):
             "creditnotes": [],
             "total": 0,
             "total_balance": 0,
-            "summary_download": domain + "/idc/" + hawb
+            "summary_download": domain + "/idc/" + hawb + '.pdf'
         }
 
         for invoice in invoices:
@@ -328,8 +328,8 @@ class PublicInvoice(http.Controller):
                             ('Content-Disposition', content_disposition('%s - Invoice.pdf' % (invoice.ref)))]
         return request.make_response(pdf, headers=pdf_http_headers)
 
-    @http.route(['/idc/<string:hawb>'], type='http', auth="public", website=True)
-    def invoice_concatenate_download_pdf(self, hawb):
+    @http.route(['/idc/<string:hawb>','/idc/<string:hawb>.pdf'], type='http', auth="public", website=True)
+    def invoice_concatenate_download_pdf(self, hawb, **kwargs):
         invoice  = invoices = request.env['account.move'].sudo().search([('ref', '=', hawb),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
         invoices += request.env['account.move'].sudo().search([('ref','like',hawb + " "),('state','=','posted'),('move_type','in',['out_refund','out_invoice'])])
         invoice_ids = invoices.ids

@@ -114,10 +114,10 @@ class cBizProductService(Component):
     #PURPOSE: For Mobile Consumer
     ##################################################################################################################
     @restapi.method(
-        [(['/mobile/'], "GET")],
+        [(['/mobile','/mobile/<string:code>'], "GET")],
         input_param=restapi.CerberusValidator("_validator_mobile")
         )
-    def mobile(self,cargo_branch_id=False,code='',company_id=2):
+    def mobile(self,cargo_branch_id=False,company_id=2, **kwargs):
 
         """
         Product QTY by Code and Branch ID
@@ -156,14 +156,17 @@ class cBizProductService(Component):
             location = self.env['stock.warehouse'].search([('branch_id','=',branch.ids)]).lot_stock_id
 
         #Create a list of Product IDs in order to merge them with given parameters.
-        if code:
+        if 'code' in kwargs:
             #if a comma is detected on the string, convert string to list
-            if ',' in code:
-                codes = code.split(',') 
+            if ',' in kwargs['code']:
+                codes = kwargs['code'].split(',') 
+                search_ids = self.env['product.template'].search([("code","in",codes)])
+            elif '|' in kwargs['code']:
+                codes = kwargs['code'].split('|') 
                 search_ids = self.env['product.template'].search([("code","in",codes)])
             else:
                 #if code is singleton without delimiter
-                search_ids = self.env['product.template'].search([("code","=",code)])
+                search_ids = self.env['product.template'].search([("code","=",kwargs['code'])])
         else:
             #If no given code, initialize product template ids for search_ids
             search_ids = self.env['product.template'].search([])
@@ -349,7 +352,7 @@ class cBizProductService(Component):
 
     def _validator_mobile(self):
         return {
-            "cargo_branch_id": {"type": "string", "required": False},
+            "cargo_branch_id": {"type": "integer", "required": False},
             "company_id": {"type": "string", "required": False},
             "code": {"type": "string", "required": False, "nullable": True}
         }

@@ -9,7 +9,7 @@
     "author": "James Tecson, Circuit Minds I.T. Business Solutions",
     "website": "https://mrm.imerex.com.ph",
     "maintainer": "Circuit Minds I.T. Business Solutions",
-    "depends": ["contacts","sale","component","base_rest","imerex_multi_branch","imerex_erp"],
+    "depends": ["contacts","sale","component","base_rest","imerex_multi_branch","imerex_erp","account_debit_note"],
     "data": [
             "views/res_config_settings_view.xml",
             "security/ir.model.access.csv"

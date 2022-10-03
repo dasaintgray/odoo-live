@@ -86,12 +86,22 @@ class cBizCargoJWT(models.Model):
         #     apicargo = self.env['cbiz.api'].api_headers()
         #     requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])
         #     return api_request
-        if not api_request.status_code == 200:
+        api_data= api_request.json()
+        if not api_data:
+            raise ValidationError("Something Went Wrong with CircuitTrack")
+        elif 'status' in api_data:
+            if api_data['status'] == 404:
+                raise ValidationError("Object Not Found")
+        elif not api_request.status_code == 200:
             if api_request.status_code == 413:
                 raise ValidationError("Attachment or Image File Size Exceeded Maximum!")
             if api_request.text == 'API Authentication Failed!':
                 raise ValidationError("CircuitTrack API Authentication Failed!")
             raise ValidationError("Syncing Issue! Please Try Again.")
+        elif api_data == 'Residence Number Exist':
+            raise ValidationError("Shipper Residence ID Exists in CircuitTrack Database! Do your job properly")
+        elif api_data == 'Shipper Mobile Exist':
+            raise ValidationError("Shipper Mobile Number Exists in CircuitTrack Database!")
         else:
             apicargo = self.env['cbiz.api'].api_headers()
             requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])

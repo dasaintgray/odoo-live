@@ -82,7 +82,7 @@ class cBizCargoJWT(models.Model):
             if api_data['status'] == 404:
                 raise ValidationError("Object Not Found")
             else:
-                raise ValidationError(api_data['status'] + "Error")
+                raise ValidationError(str(api_data['status']) + ": Error")
         elif not api_request.status_code == 200:
             if api_request.status_code == 413:
                 raise ValidationError("Attachment or Image File Size Exceeded Maximum!")

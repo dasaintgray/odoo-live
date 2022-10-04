@@ -335,6 +335,20 @@ class cBizSaleOrderService(Component):
                 created_partner = self.env['cbiz.api.cargoapi'].cargo_sync_shipper(values['shipper_id'])
                 values['partner_id'] = created_partner.id
 
+        if 'shipper_details' in values:
+            if 'shipper_id' in values or 'partner_id' in values:
+                raise ValidationError("Do not use both 'shipper_id' and 'partner_id' with shipper_details")
+            created_partner = self.env['res.partner'].search([('name','=',values['shipper_details']['name'])])
+            if not created_partner:
+                created_partner = self.env['res.partner'].create({
+                    "name": values['shipper_details']['name'],
+                    "phone": values['shipper_details']['phone'],
+                    "vat": values['shipper_details']['vat'],
+                    "email": "cargo_v1@imerex.com.ph"
+                })
+            values['partner_id'] = created_partner.id
+                
+
         #use cargo_branch_id to search for branch_id which is required by sale order
         if 'cargo_branch_id' in values:
             values['branch_id'] = self.env['res.branch'].search([('cargo_branch_id','=',values['cargo_branch_id'])]).id
@@ -423,6 +437,11 @@ class cBizSaleOrderService(Component):
                 "nullable": True
             }
         }
+        shipper_schema = {
+            "name": {"type":"string", "required":True},
+            "phone": {"type":"string", "required": True},
+            "vat": {"type":"string", "required": True, "nullable": True}
+        }
         res = {
             "name":{
                 "type": "string",
@@ -430,6 +449,11 @@ class cBizSaleOrderService(Component):
             },
             "shipper_id":{},
             "date_order":{},
+            "shipper_details":{
+                "required": False,
+                "empty": True,
+                "type": "dict",
+                },
             "partner_id":{"type": "integer"},
             "company_id": {"type": "integer"},
             "cargo_branch_id":{"type": "integer"},

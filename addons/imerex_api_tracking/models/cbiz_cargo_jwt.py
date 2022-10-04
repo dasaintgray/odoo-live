@@ -71,7 +71,12 @@ class cBizCargoJWT(models.Model):
 
     def api_validation(self,api_request):
         api_data= api_request.json()
-        if not api_data:
+
+        if api_data == True:
+            apicargo = self.env['cbiz.api'].api_headers()
+            requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])
+            return api_request
+        elif not api_data:
             raise ValidationError("Something Went Wrong with CircuitTrack")
         elif 'status' in api_data:
             if api_data['status'] == 404:

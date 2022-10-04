@@ -1,5 +1,6 @@
 #Res Partner modification
 
+import base64
 from odoo import fields, models, api, _
 from odoo.tools.misc import unique
 from odoo.tools import date_utils
@@ -224,7 +225,6 @@ class cBizCargoAPI(models.Model):
             if 'shipperphoto' in cargo_get_shipper:
                 if cargo_get_shipper['shipperphoto']:
                     image_1920 = cargo_get_shipper['shipperphoto'][18:]
-
             full_name = cargo_get_shipper['shipperFirstName'] + " " + cargo_get_shipper['shipperLastName']
             if cargo_get_shipper['shipperExt']:
                 full_name += " " + cargo_get_shipper['shipperExt']
@@ -240,11 +240,19 @@ class cBizCargoAPI(models.Model):
                 'mobile': cargo_get_shipper['shipperMobileNo'] or False,
                 'vat': cargo_get_shipper['residenceIdNumber'] or False,
                 'email': cargo_get_shipper['emailaddress'] or False,
+                'street': cargo_get_shipper['shipperaddress'],
                 'loyalty_id': 8900000000000 + cargo_get_shipper['shipperId'],
                 'branch_id': False
             }
 
             create_partner = self.env['res.partner'].create(values)
+            if 'residenceIdPhoto' in cargo_get_shipper:
+                if cargo_get_shipper['residenceIdPhoto']:
+                    residence_id_attachment = base64.b64decode(cargo_get_shipper['residenceIdPhoto'][18:])
+                    create_partner.message_post(
+                                    body="Residence ID Attachment",
+                                    attachments=[('{}: {} - Residence ID.jpg'.format(full_name.title(),cargo_get_shipper['residenceIdNumber']), residence_id_attachment)]
+                                    )
             if cargo_get_shipper['appusername'] and cargo_get_shipper['appuserpass']:
                 #Create user from create_partner
                 self.env['res.users'].create([{

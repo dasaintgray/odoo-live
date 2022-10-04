@@ -70,28 +70,14 @@ class cBizCargoJWT(models.Model):
         return api_cargo
 
     def api_validation(self,api_request):
-        # if api_request.text == '':
-        #     raise ValidationError("Something Went Wrong with CircuitTrack")
-        # elif not api_request.status_code == 200:
-        #     if api_request.status_code == 413:
-        #         raise ValidationError("Attachment or Image File Size Exceeded Maximum!")
-        #     if api_request.text == 'API Authentication Failed!':
-        #         raise ValidationError("CircuitTrack API Authentication Failed!")
-        #     raise ValidationError("Syncing Issue! Please Try Again.")
-        # elif api_request.text == 'Residence Number Exist':
-        #     raise ValidationError("Shipper Residence ID Exists in CircuitTrack Database! Do your job properly")
-        # elif api_request.text == 'Shipper Mobile Exist':
-        #     raise ValidationError("Shipper Mobile Number Exists in CircuitTrack Database!")
-        # else:
-        #     apicargo = self.env['cbiz.api'].api_headers()
-        #     requests.get(apicargo['shipper_refresh_url'],headers=apicargo['headers'])
-        #     return api_request
         api_data= api_request.json()
         if not api_data:
             raise ValidationError("Something Went Wrong with CircuitTrack")
         elif 'status' in api_data:
             if api_data['status'] == 404:
                 raise ValidationError("Object Not Found")
+            else:
+                raise ValidationError(api_data['status'] + "Error")
         elif not api_request.status_code == 200:
             if api_request.status_code == 413:
                 raise ValidationError("Attachment or Image File Size Exceeded Maximum!")
@@ -126,17 +112,3 @@ class cBizCargoJWT(models.Model):
         api_cargo_data_payload = sys.getsizeof(api_bytes_cargo) / (1024*1024)
         api_data_payload = sys.getsizeof(api_bytes) / (1024*1024)
         api_length
-
-    # def sale_order_automation(self,branch_id):
-    #     """For running only with emergency"""
-    #     orders = self.env['sale.order'].search([("state","=",'draft'),("branch_id","=",branch_id)])
-    #     for order in orders:
-    #         order.action_confirm()
-
-    # def stock_move_automation(self):
-    #     pickings = self.env['stock.picking'].search([('state','=','assigned'),('company_id','=',2)])
-    #     for picking in pickings:
-    #         # picking.action_assign()
-    #         # picking.action_confirm()
-    #         for mv in picking.move_ids_without_package:
-    #             mv.quantity_done = mv.product_uom_qty

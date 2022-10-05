@@ -141,7 +141,7 @@ class cBizCargoAPI(models.Model):
                 "shipperId": values['shipper_id'] if 'shipper_id' in values else res_partner.shipper_id,
                 "remarks": "Updated by CBIZ",
                 "isactive": True,
-                "countryId":3,
+                "countryId":13,
                 "longitude": 0,
                 "latitude": 0,
                 "updatedBy": "CBIZ",

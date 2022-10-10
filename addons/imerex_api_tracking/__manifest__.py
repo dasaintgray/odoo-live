@@ -2,7 +2,7 @@
 
 {
     "name": "Imerex - Tracking",
-    "version": "0.0.0.1",
+    "version": "0.1",
     "category": "Hidden",
     "license": "AGPL-3",
     "summary": "ERP customization",

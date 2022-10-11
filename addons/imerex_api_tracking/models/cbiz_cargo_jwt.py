@@ -117,3 +117,18 @@ class cBizCargoJWT(models.Model):
         api_cargo_data_payload = sys.getsizeof(api_bytes_cargo) / (1024*1024)
         api_data_payload = sys.getsizeof(api_bytes) / (1024*1024)
         api_length
+        
+    def sales_automation(self):
+        sales_orders = self.env['account.move'].search([('name','like','-'),('company_id','=', 1)])
+        number_of_sales_orders = len(sales_orders)
+        number_of_sales_orders
+        for sales_order in sales_orders:
+            sales_order.action_cancel()
+            sales_order.unlink()
+            
+    def invoice_automation(self):
+        invoices = self.env['account.move'].search([('ref','like','-'),('move_type', '=', 'out_invoice'),('company_id','=', 1)]).with_context({'default_move_type': 'out_invoice' ,  'force_delete': 'True'})
+        number_of_invoice = len(invoices)
+        number_of_invoice
+        for invoice in invoices:
+            invoice.button_draft()

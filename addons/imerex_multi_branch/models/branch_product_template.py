@@ -16,12 +16,15 @@ class ProductTemplate(models.Model):
     @api.depends('company_id')
     def _compute_branch(self):
         for order in self:
-            company = self.env.company
-            so_company = order.company_id if order.company_id else self.env.company
-            branch_ids = self.env.user.branch_ids
-            branch = branch_ids.filtered(
-                lambda branch: branch.company_id == so_company)
-            if branch:
-                order.branch_id = branch
+            if order.company_id:
+                company = self.env.company
+                so_company = order.company_id if order.company_id else self.env.company
+                branch_ids = self.env.user.branch_ids
+                branch = branch_ids.filtered(
+                    lambda branch: branch.company_id == so_company)
+                if branch:
+                    order.branch_id = branch
+                else:
+                    order.branch_id = False
             else:
                 order.branch_id = False

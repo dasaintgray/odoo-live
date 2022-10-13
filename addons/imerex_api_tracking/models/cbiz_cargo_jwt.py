@@ -122,9 +122,8 @@ class cBizCargoJWT(models.Model):
         sales_orders = self.env['sale.order'].search([('name','like','-'),('company_id','=', 1)])
         number_of_sales_orders = len(sales_orders)
         number_of_sales_orders
+        # sales_orders.action_cancel()
         # sales_orders.unlink()
-        # for sales_order in sales_orders:
-        #     sales_order.action_cancel()
             
     def invoice_automation(self):
         invoices = self.env['account.move'].search([('ref','like','-'),('move_type', '=', 'out_invoice'),('company_id','=', 1)]).with_context({'default_move_type': 'out_invoice' ,  'force_delete': 'True'})

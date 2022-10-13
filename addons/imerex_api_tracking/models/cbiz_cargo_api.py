@@ -38,24 +38,6 @@ class cBizCargoAPI(models.Model):
         response = api_request.json()
         return [response, api_type]
 
-    def shipping_track_automation(self):
-        """transaction tracking"""
-        orders = self.env['sale.order'].search([("name","=",name),("state","=","draft"),("company_id","=",2)])
-        for order in orders:
-            order.action_confirm()
-
-    def sale_order_package(self):
-        """transaction tracking"""
-        orders = self.env['sale.order'].search([("state","=","draft"),("company_id","=",2),('user_id',"=",2)], limit=200)
-        for order in orders:
-            order.action_confirm()
-
-    def sale_order_automation(self,body,name):
-        """Sale Order Automation"""
-        
-        orders = self.env['sale.order'].search([("name","=",name)])
-        orders.message_post(body=body,message_type="comment", subtype_xmlid="mail.mt_comment")
-        orders
 
     def cargo_create_shipper(self,values):
         apicargo = self.env['cbiz.api'].api_headers()

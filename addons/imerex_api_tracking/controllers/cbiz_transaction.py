@@ -371,7 +371,7 @@ class cBizSaleOrderService(Component):
             values['payment_journal_id'] = default_id[0]
 
         sale_order_fields = self._sale_order_fields()
-        sale_order_values={}
+        sale_order_values = {}
 
         #convert from local TZ to UTC
         values['date_order'] = self._time_store(values['date_order'])

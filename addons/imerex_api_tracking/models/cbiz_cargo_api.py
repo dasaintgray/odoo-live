@@ -37,8 +37,7 @@ class cBizCargoAPI(models.Model):
             api_type = "hawb"
         response = api_request.json()
         return [response, api_type]
-
-
+    
     def cargo_create_shipper(self,values):
         apicargo = self.env['cbiz.api'].api_headers()
         #check if in posession of JWT token
@@ -101,7 +100,7 @@ class cBizCargoAPI(models.Model):
                 "shipperId": values['shipper_id'],
                 "remarks": "Updated by CBIZ",
                 "isactive": True,
-                "countryId":13,
+                "countryId": 13,
                 "longitude": 0,
                 "latitude": 0,
                 "updatedBy": "CBIZ",
@@ -193,6 +192,14 @@ class cBizCargoAPI(models.Model):
             api_request = requests.get(api_url, headers=apicargo['headers'])
             api_response = self.env['cbiz.api'].api_validation(api_request)
             return api_response.json()
+        
+    def cargo_get_branch(self,company_id):
+        apicargo = self.env['cbiz.api'].api_headers()
+        if apicargo['token']:
+            headers = apicargo['branches_company'] + str(company_id)
+            api_request = requests.get(headers, headers=apicargo['headers'])
+            api_response = api_request.json()
+        return api_response
 
     def cargo_sync_shipper(self,shipper_id):
         check_partner = self.env['res.partner'].search([('shipper_id','=',shipper_id)])

@@ -3,6 +3,7 @@ from odoo import fields, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
 from odoo.exceptions import ValidationError
+import requests
 class cBizBranchService(Component):
     _inherit = "base.rest.service"
     _name = "cbiz.branch.service"
@@ -40,6 +41,8 @@ class cBizBranchService(Component):
         Search branch by Name or company name
         """
         search_ids = self.env['res.branch'].search([]).ids
+        circuitbiz_branches = self.env['res.branch'].search([]).ids
+        cargo_branches = self.env['cbiz.api.cargoapi'].cargo_get_branch(13)
         if name:
             search_name = self.env['res.branch'].search([("name","like",name)]).ids
             search_ids = search_name

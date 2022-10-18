@@ -61,6 +61,7 @@ class cBizCargoJWT(models.Model):
             'shipper_refresh_url' : domain + '/shippers-refresh/',
             'transaction_url': domain + '/transaction-track/',
             'transaction_trackhawb': domain + '/transaction-trackhawb/',
+            'branches_company': domain + '/branches-company/',
             'token' : token.access_token,
             'headers' : {
                 "Content-Type": "application/json",

@@ -18,7 +18,7 @@ class SaleOrder(models.Model):
     def _prepare_invoice(self):
         invoice_vals = super(SaleOrder, self)._prepare_invoice()
         #convert UTC timezone to local timezone for conversion of invoice_vals
-        date_order_local = self.date_order.astimezone(pytz.timezone(self.env.context.get('tz')))
+        date_order_local = self.date_order.astimezone(pytz.timezone(self.env.user.tz))
         #bring the converted value back to the dict with key date_order
         invoice_vals['invoice_date'] = fields.Datetime.to_string(date_order_local)
         invoice_vals['ref'] = self.name

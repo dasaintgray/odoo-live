@@ -506,7 +506,7 @@ class cBizSaleOrderService(Component):
 
     def _time_store(self, order_date):
         #convert from local to utc as Odoo framework stores date in UTC for easy conversion
-        user_tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
+        user_tz = pytz.timezone(self.env.user.tz or 'UTC')
         #convert string to datetime format for local time
         date_order = user_tz.localize(fields.Datetime.from_string(order_date))
         #change timezone to UTC

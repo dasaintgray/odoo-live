@@ -40,21 +40,29 @@ class cBizBranchService(Component):
         """
         Search branch by Name or company name
         """
-        search_ids = self.env['res.branch'].search([]).ids
-        circuitbiz_branches = self.env['res.branch'].search([]).ids
-        cargo_branches = self.env['cbiz.api.cargoapi'].cargo_get_branch(13)
+        cargo_branches: list = self.env['cbiz.api.cargoapi'].cargo_get_branch(4)
+        search_domain= []
         if name:
-            search_name = self.env['res.branch'].search([("name","like",name)]).ids
-            search_ids = search_name
+            search_domain.append(('name','like',name))
         if company:
-            search_company = self.env['res.branch'].search([("company_id.name","like",company)]).ids
-            search_ids = list(set(search_company)&set(search_ids))
-        if not search_ids:
+            search_domain.append(('name','like',company))
+        
+        search_branches = self.env['res.branch'].search(search_domain)
+            
+        if not search_branches:
             raise ValidationError("No Branch with given parameters")
-        final_search = self.env["res.branch"].search([("id","=",search_ids)])
+        dict_branches: dict ={a['branchId'] : a  for a in cargo_branches}
+        
         return_value = []
-        for id in final_search.ids:
-            return_value.append(self._return_branch_values(id))
+        for branch in search_branches:
+            branch_value = dict_branches.get(branch.cargo_branch_id) or {}
+            branch_value.update({
+                "id": branch.id,
+                "name": branch.name,
+                "company": branch.company_id.name
+            })
+            return_value.append(branch_value)
+        
         return return_value
         
 

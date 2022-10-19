@@ -1,11 +1,9 @@
 
-from odoo import fields, http, _
+from odoo import http, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
-from datetime import datetime,timedelta
-from odoo.http import request, content_disposition
+from odoo.http import request
 from odoo.exceptions import ValidationError
-from PIL import Image
 import base64
 class cBizProductService(Component):
     _inherit = "base.rest.service"

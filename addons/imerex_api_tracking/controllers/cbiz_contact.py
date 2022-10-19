@@ -392,7 +392,7 @@ class cBizContactService(Component):
             return rows
 
     def _http_image(self,id):
-        status,headers,data = self.env["ir.http"].binary_content(
+        status, headers ,data = self.env["ir.http"].binary_content(
             model="res.partner", id=id, field="image_1920"
         )
         if data:

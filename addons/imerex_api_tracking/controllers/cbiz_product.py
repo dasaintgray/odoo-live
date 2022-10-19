@@ -1,10 +1,12 @@
 
-from odoo import fields, _
+from odoo import fields, http, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
 from datetime import datetime,timedelta
-
+from odoo.http import request, content_disposition
 from odoo.exceptions import ValidationError
+from PIL import Image
+import base64
 class cBizProductService(Component):
     _inherit = "base.rest.service"
     _name = "cbiz.product.service"
@@ -265,90 +267,12 @@ class cBizProductService(Component):
                 "currency":currency or False,
                 "branch": i[15] if 15 < len(i) else '',
                 "salescount": i[13] or 0,
-                'image_url_128': base_url + str(i[0]) + "/image_128",
-                'image_url_256': base_url + str(i[0]) + "/image_256",
-                'image_url_512': base_url + str(i[0]) + "/image_512"
+                'image_url_128': base_url + "/product/image_128/" + str(i[0]),
+                'image_url_256': base_url + "/product/image_256/" +str(i[0]),
+                'image_url_512': base_url + "/product/image_512/" + str(i[0])
             }
             return_value.append(datarow)
         return return_value
-
-
-    @restapi.method(
-        [(['/test_mobile/'], "GET")],
-        input_param=restapi.CerberusValidator("_validator_mobile")
-        )
-    def test_mobile(self,cargo_branch_id=False,code='',company_id=2):
-
-        """
-        Product QTY by Code and Branch ID
-        """
-        #Search Branch with the given cargo_branch_id
-        branch = self.env['res.branch'].search([('cargo_branch_id','=',cargo_branch_id)])
-        location = self.env['stock.warehouse'].search([('branch_id','=',branch.ids)]).lot_stock_id
-
-        #Create a list of Product IDs in order to merge them with given parameters.
-        if code:
-            #if a comma is detected on the string, convert string to list
-            if ',' in code:
-                codes = code.split(',') 
-                search_ids = self.env['product.template'].search([("code","in",codes)])
-            else:
-                #if code is singleton without delimiter
-                search_ids = self.env['product.template'].search([("code","=",code)])
-        else:
-            #If no given code, initialize product template ids for search_ids
-            search_ids = self.env['product.template'].search([])
-
-        #Check if there are items with all given parameters
-        if not search_ids:
-            raise ValidationError("No Product Found")
-
-        #Initialize return values
-        return_value=[]
-
-        #Initialize base_url
-        base_url = self.env['ir.config_parameter'].get_param('web.base.url').replace('http://','https://') + "/web/image/product.template/" 
-
-        #Serialize Data using Odoo ORM
-        for product in search_ids:
-
-            #If location found, system will use warehouse, else system will use all
-            if location:
-                qty_available = self.env['stock.quant']._get_available_quantity(product,location)
-            else:
-                qty_available = product.qty_available
-    
-            #Search for tax to compute, temporarily hardcoded, however needed to be adjusted if multiple sales tax are included
-            tax = product.taxes_id.search([('company_id','=',2),('type_tax_use','=','sale')],limit=1)
-
-            #Compute Total with Tax with given Parameter
-            orderline = self.env['sale.order.line'].new({
-                'product_template_id': product.id,
-                'price_unit': product.list_price,
-                'tax_id': tax
-            })
-
-            #Create a dict of the product details
-            details = {
-                'id': product.id,
-                'code': product.code or '',
-                'name': product.name,
-                'description': product.description_sale or '',
-                'qty': qty_available,
-                'price': orderline.price_unit + orderline.price_tax,
-                'currency': product.currency_id.display_name,
-                'sales_count': product.sales_count,
-                'branch': branch.receipt_branchname or '',
-                'image_url_128': base_url + str(product.id) + "/image_128",
-                'image_url_256': base_url + str(product.id) + "/image_256",
-                'image_url_512': base_url + str(product.id) + "/image_512"
-            }
-
-            #List all appended values from details
-            return_value.append(details)
-        #sort according to sales count
-        sorted_value = sorted(return_value, key = lambda i: i['sales_count'], reverse=True)
-        return sorted_value
 
     def _validator_mobile(self):
         return {
@@ -405,3 +329,17 @@ class cBizProductService(Component):
         if image_string == "data:image;base64,":
             image_string = ''
         return image_string
+
+
+class ProductController(http.Controller):
+    _description="""Product New Controller """        
+        
+    @http.route(['/product/<string:image_str>/<int:seq>'], type='http', auth="api_key", website=True)
+    def product_download_image(self, image_str, seq):
+        status, headers, image = request.env["ir.http"].binary_content(
+            model="product.product", id=seq, field=image_str
+        )
+        image = base64.b64decode(image)
+        return request.make_response(image, headers=headers)
+
+    

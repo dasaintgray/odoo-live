@@ -182,7 +182,7 @@ class cBizProductService(Component):
         #Initialize return values
         return_value=[]
         #Initialize base_url
-        base_url = self.env['ir.config_parameter'].get_param('web.base.url').replace('http://','https://') + "/web/image/product.template/"
+        base_url = self.env['ir.config_parameter'].get_param('web.base.url').replace('http://','https://')
 
         #Stringify list of product_ids and location_ids in the branch for postgresql query consumption
         product_ids = ", ".join(repr(id) for id in search_ids.ids)

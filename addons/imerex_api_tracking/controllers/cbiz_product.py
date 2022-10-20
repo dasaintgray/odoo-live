@@ -1,4 +1,5 @@
 
+from urllib import response
 from odoo import http, _
 from odoo.addons.base_rest import restapi
 from odoo.addons.component.core import Component
@@ -334,12 +335,24 @@ class cBizProductService(Component):
 
 class ProductControllerBinary(Binary):
     _description="""Product New Binary Controller """        
-        
-    @http.route(['/product/<string:image_str>/<int:seq>'], type='http', auth="api_key", website=True)
+    
+    @http.route(['/product/<string:image_str>/<int:seq>'], auth="api_key")
     def product_download_image(self, image_str, seq,**kwargs):
-        return self.content_image(xmlid=None, model='ir.attachment', id=seq, field=image_str,
+        response_image = self._content_image(xmlid=None, model='product.product', id=seq, field=image_str,
                       filename_field='name', unique=None, filename=None, mimetype=None,
-                      download=None, width=0, height=0, crop=False, access_token=None, quality=int(kwargs.get('quality', 0)))
+                      download=None, width=0, height=0, crop=False, access_token=None, quality=int(kwargs.get('quality', 0)), **kwargs)
+        return response_image
     
+    def _content_image(self, xmlid=None, model='ir.attachment', id=None, field='datas',
+                       filename_field='name', unique=None, filename=None, mimetype=None,
+                       download=None, width=0, height=0, crop=False, quality=0, access_token=None,
+                       placeholder=None, **kwargs):
+        status, headers, image_base64 = request.env['ir.http'].binary_content(
+            xmlid=xmlid, model=model, id=id, field=field, unique=unique, filename=filename,
+            filename_field=filename_field, download=download, mimetype=mimetype,
+            default_mimetype='image/png', access_token=access_token)
 
-    
+        return Binary._content_image_get_response(
+            status, headers, image_base64, model=model, id=id, field=field, download=download,
+            width=width, height=height, crop=crop, quality=quality,
+            placeholder=placeholder)

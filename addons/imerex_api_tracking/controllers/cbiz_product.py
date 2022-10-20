@@ -6,6 +6,8 @@ from odoo.http import request
 from odoo.exceptions import ValidationError
 import base64
 from odoo.modules import get_module_resource
+from addons.web.controllers.main import Binary
+
 class cBizProductService(Component):
     _inherit = "base.rest.service"
     _name = "cbiz.product.service"
@@ -334,17 +336,10 @@ class ProductController(http.Controller):
     _description="""Product New Controller """        
         
     @http.route(['/product/<string:image_str>/<int:seq>'], type='http', auth="api_key", website=True)
-    def product_download_image(self, image_str, seq):
-        status, headers, image = request.env["ir.http"].binary_content(
-            model="product.template", id=seq, field=image_str
-        )
-        if image:
-            image = base64.b64decode(image)
-        else:
-            image_path = get_module_resource('web','static/src/img','placeholder.png')
-            with open(image_path, 'rb') as file:
-                image = file.read()
-                headers.append(('Content-Type','image/png'))
-        return request.make_response(image, headers=headers)
+    def product_download_image(self, image_str, seq,**kwargs):
+        return Binary.content_image(self, xmlid=None, model='ir.attachment', id=seq, field=image_str,
+                      filename_field='name', unique=None, filename=None, mimetype=None,
+                      download=None, width=0, height=0, crop=False, access_token=None, quality=int(kwargs.get('quality', 0)))
+    
 
     

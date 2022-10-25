@@ -1,4 +1,5 @@
 
+from typing import Optional
 from urllib import response
 from odoo import http, _
 from odoo.addons.base_rest import restapi
@@ -121,7 +122,7 @@ class cBizProductService(Component):
         [(['/mobile','/mobile/<string:code>'], "GET")],
         input_param=restapi.CerberusValidator("_validator_mobile")
         )
-    def mobile(self,cargo_branch_id=False,company_id=2, **kwargs):
+    def mobile(self,cargo_branch_id=False ,company_id=2, **kwargs):
 
         """
         Product QTY by Code and Branch ID
@@ -278,7 +279,7 @@ class cBizProductService(Component):
 
     def _validator_mobile(self):
         return {
-            "cargo_branch_id": {"type": "integer", "required": False},
+            "cargo_branch_id": {"required": False},
             "company_id": {"type": "string", "required": False},
             "code": {"type": "string", "required": False, "nullable": True}
         }
